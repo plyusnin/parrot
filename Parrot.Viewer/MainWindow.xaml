@@ -4,9 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Parrot.Viewer"
+        xmlns:views="clr-namespace:Parrot.Viewer.Views"
+        xmlns:viewModels="clr-namespace:Parrot.Viewer.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="350" Width="525"
+        SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display"
+        Background="{StaticResource {x:Static SystemColors.ControlBrushKey}}"
+        d:DataContext="{d:DesignInstance viewModels:MainViewModel}">
     <Grid>
-        
+        <views:TilesView DataContext="{Binding Gallery}" />
     </Grid>
 </Window>
