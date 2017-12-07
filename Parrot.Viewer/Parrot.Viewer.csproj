@@ -79,6 +79,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="GallerySources\FolderGallerySource.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\Tiles\GalleryViewModel.cs" />
     <Compile Include="GallerySources\IGallerySource.cs" />

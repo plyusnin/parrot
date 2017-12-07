@@ -5,17 +5,32 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Parrot.Viewer.Views"
              xmlns:tiles="clr-namespace:Parrot.Viewer.ViewModels.Tiles"
-             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300" d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
+             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300"
+             d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
-        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  Background="DarkSlateGray" Padding="20,0">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel ItemHeight="220" ItemWidth="220" />
                 </ItemsPanelTemplate>
             </ListView.ItemsPanel>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Image Width="200" Height="200" Source="{Binding Image}" Stretch="UniformToFill" />
+                    <Border>
+                        <Border.Effect>
+                            <DropShadowEffect Opacity="0.3" ShadowDepth="5" BlurRadius="35" />
+                        </Border.Effect>
+                        <Grid>
+                            <Image Width="200" Height="200" Source="{Binding Image}" Stretch="UniformToFill" />
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
