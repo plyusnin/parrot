@@ -8,8 +8,7 @@
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
-        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                  Background="DarkSlateGray">
+        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel ItemHeight="220" ItemWidth="220" HorizontalAlignment="Center" />
@@ -24,6 +23,11 @@
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Border>
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftDoubleClick"
+                                          Command="{Binding Path=DataContext.Open, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
+                                          CommandParameter="{Binding}" />
+                        </Border.InputBindings>
                         <Border.Effect>
                             <DropShadowEffect Opacity="0.3" ShadowDepth="5" BlurRadius="35" />
                         </Border.Effect>

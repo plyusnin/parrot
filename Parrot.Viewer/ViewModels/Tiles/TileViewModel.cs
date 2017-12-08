@@ -12,7 +12,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
             Thumbnail = new BitmapImage();
             Thumbnail.BeginInit();
             Thumbnail.StreamSource = ThumbnailStream;
-            Thumbnail.CacheOption = BitmapCacheOption.OnLoad;
+            Thumbnail.CacheOption = BitmapCacheOption.OnDemand;
             Thumbnail.EndInit();
         }
 

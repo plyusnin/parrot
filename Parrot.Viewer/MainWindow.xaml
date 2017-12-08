@@ -6,12 +6,68 @@
         xmlns:local="clr-namespace:Parrot.Viewer"
         xmlns:views="clr-namespace:Parrot.Viewer.Views"
         xmlns:viewModels="clr-namespace:Parrot.Viewer.ViewModels"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525"
         SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display"
-        Background="{StaticResource {x:Static SystemColors.ControlBrushKey}}"
-        d:DataContext="{d:DesignInstance viewModels:MainViewModel}">
+        d:DataContext="{d:DesignInstance viewModels:MainViewModel}"
+        Background="DarkSlateGray">
+    <Window.Resources>
+        <PowerEase x:Key="EaseOut" EasingMode="EaseInOut" />
+        <Storyboard x:Key="OpenViewerStoryboard">
+            <DoubleAnimation Storyboard.TargetName="Gallery" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                             To="0.8" Duration="0:0:0.5" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Gallery" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                             To="0.8" Duration="0:0:0.5" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Gallery" Storyboard.TargetProperty="Opacity"
+                             To="0.0" Duration="0:0:0.5" />
+            <DoubleAnimation Storyboard.TargetName="Viewer" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                             From="0.8" Duration="0:0:0.5" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Viewer" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                             From="0.8" Duration="0:0:0.5" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Viewer" Storyboard.TargetProperty="Opacity"
+                             To="1.0" Duration="0:0:0.5" />
+        </Storyboard>
+        <Storyboard x:Key="CloseViewerStoryboard">
+            <DoubleAnimation Storyboard.TargetName="Gallery" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                             Duration="0:0:0.3" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Gallery" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                             Duration="0:0:0.3" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Gallery" Storyboard.TargetProperty="Opacity"
+                             From="0.0"  Duration="0:0:0.3" />
+            <DoubleAnimation Storyboard.TargetName="Viewer" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                             To="1.3" Duration="0:0:0.3" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Viewer" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                             From="1.3" Duration="0:0:0.3" EasingFunction="{StaticResource EaseOut}" />
+            <DoubleAnimation Storyboard.TargetName="Viewer" Storyboard.TargetProperty="Opacity"
+                             From="1.0" To="0.0" Duration="0:0:0.3" />
+        </Storyboard>
+    </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseViewer}" />
+    </Window.InputBindings>
     <Grid>
-        <views:TilesView DataContext="{Binding Gallery}" />
+        <views:TilesView x:Name="Gallery" DataContext="{Binding Gallery}" RenderTransformOrigin="0.5, 0.5">
+            <views:TilesView.RenderTransform>
+                <ScaleTransform />
+            </views:TilesView.RenderTransform>
+        </views:TilesView>
+        <views:SingleView x:Name="Viewer" DataContext="{Binding Single}" RenderTransformOrigin="0.5, 0.5"
+                          Opacity="0" IsHitTestVisible="False">
+            <views:SingleView.RenderTransform>
+                <ScaleTransform />
+            </views:SingleView.RenderTransform>
+        </views:SingleView>
     </Grid>
+    <i:Interaction.Triggers>
+        <ei:DataTrigger Binding="{Binding Single}" Value="{x:Null}" Comparison="NotEqual">
+            <ei:ChangePropertyAction TargetName="Viewer" PropertyName="IsHitTestVisible" Value="True" />
+            <ei:ControlStoryboardAction Storyboard="{StaticResource OpenViewerStoryboard}" ControlStoryboardOption="Play" />
+        </ei:DataTrigger>
+        <ei:DataTrigger Binding="{Binding Single}" Value="{x:Null}" Comparison="Equal">
+            <ei:ChangePropertyAction TargetName="Viewer" PropertyName="IsHitTestVisible" Value="False" />
+            <ei:ControlStoryboardAction Storyboard="{StaticResource CloseViewerStoryboard}" ControlStoryboardOption="Play" />
+        </ei:DataTrigger>
+    </i:Interaction.Triggers>
 </Window>
