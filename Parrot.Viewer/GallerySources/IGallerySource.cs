@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using photo.exif;
+﻿using System.IO;
 using ReactiveUI;
 
 namespace Parrot.Viewer.GallerySources
@@ -12,27 +10,26 @@ namespace Parrot.Viewer.GallerySources
 
     public interface IPhotoEntity
     {
-        Stream Content { get; }
+        string FileName { get; }
+        Stream Thumbnail { get; }
+        ExifInformation Exif { get; }
+        Stream Open();
     }
 
-    public abstract class PhotoEntityBase : IPhotoEntity
+    public class PhotoEntity : IPhotoEntity
     {
-        private readonly Dictionary<int, ExifItem> _exifItems;
-        protected PhotoEntityBase(Dictionary<int, ExifItem> ExifItems) { _exifItems = ExifItems; }
-        public abstract Stream Content { get; }
-    }
+        private readonly byte[] _thumbnail;
 
-    public class FilePhotoEntity : PhotoEntityBase
-    {
-        private readonly string _path;
-        public FilePhotoEntity(Dictionary<int, ExifItem> ExifItems, string Path) : base(ExifItems) { _path = Path; }
-        public override Stream Content => File.OpenRead(_path);
-    }
+        public PhotoEntity(string FileName, byte[] Thumbnail, ExifInformation Exif)
+        {
+            _thumbnail = Thumbnail;
+            this.FileName = FileName;
+            this.Exif = Exif;
+        }
 
-    public class MemoryPhotoEntity : PhotoEntityBase
-    {
-        private readonly byte[] _content;
-        public MemoryPhotoEntity(Dictionary<int, ExifItem> ExifItems, byte[] Content) : base(ExifItems) { _content = Content; }
-        public override Stream Content => new MemoryStream(_content);
+        public ExifInformation Exif { get; }
+        public string FileName { get; }
+        public Stream Open() { return File.OpenRead(FileName); }
+        public Stream Thumbnail => new MemoryStream(_thumbnail);
     }
 }

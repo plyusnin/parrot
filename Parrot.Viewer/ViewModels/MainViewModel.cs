@@ -1,4 +1,5 @@
 ﻿using Parrot.Viewer.GallerySources;
+using Parrot.Viewer.GallerySources.Database;
 using Parrot.Viewer.ViewModels.Tiles;
 using ReactiveUI;
 
@@ -8,7 +9,9 @@ namespace Parrot.Viewer.ViewModels
     {
         public MainViewModel()
         {
-            IGallerySource source = new FolderGallerySource(@"C:\Users\plyusnin\Desktop\Photos");
+            IGallerySource source =
+                new DatabaseGallerySource(
+                    new FolderGallerySource(@"C:\Users\plyusnin\Desktop\Photos"));
             Gallery = new GalleryViewModel(source);
         }
 

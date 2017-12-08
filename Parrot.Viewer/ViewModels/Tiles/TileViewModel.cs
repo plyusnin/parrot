@@ -1,19 +1,22 @@
 ﻿using System.IO;
 using System.Windows.Media.Imaging;
+using Parrot.Viewer.GallerySources;
 
 namespace Parrot.Viewer.ViewModels.Tiles
 {
     public class TileViewModel
     {
-        public TileViewModel(Stream ImageStream)
+        public TileViewModel(Stream ThumbnailStream, ExifInformation Exif)
         {
-            Image = new BitmapImage();
-            Image.BeginInit();
-            Image.StreamSource = ImageStream;
-            Image.CacheOption = BitmapCacheOption.OnLoad;
-            Image.EndInit();
+            this.Exif = Exif;
+            Thumbnail = new BitmapImage();
+            Thumbnail.BeginInit();
+            Thumbnail.StreamSource = ThumbnailStream;
+            Thumbnail.CacheOption = BitmapCacheOption.OnLoad;
+            Thumbnail.EndInit();
         }
 
-        public BitmapImage Image { get; }
+        public BitmapImage Thumbnail { get; }
+        public ExifInformation Exif { get; }
     }
 }

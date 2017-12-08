@@ -1,41 +1,38 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
 using photo.exif;
+using Parrot.Viewer.GallerySources.Database;
 using ReactiveUI;
 
 namespace Parrot.Viewer.GallerySources
 {
-    public class FolderGallerySource : IGallerySource
+    public class FolderGallerySource : IFileGallerySource, IDisposable
     {
-        private readonly Parser _parser = new Parser();
+        private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
+
         private readonly string _root;
-        private readonly double _thumbnailSize = 300.0;
 
         public FolderGallerySource(string Root)
         {
             _root = Root;
-            Photos = new ReactiveList<IPhotoEntity>(
-                Directory.EnumerateFiles(_root, "*.jpg")
-                         .Select(OpenPhoto));
+            Photos = new ReactiveList<FilePhotoRecord>();
+
+            Directory.EnumerateFiles(_root, "*.jpg")
+                     .ToObservable()
+                     .SubscribeOn(TaskPoolScheduler.Default)
+                     .Select(OpenPhoto)
+                     .Subscribe(Photos.Add)
+                     .DisposeWith(_disposeOnExit);
         }
 
-        public IReactiveList<IPhotoEntity> Photos { get; }
+        public void Dispose() { _disposeOnExit.Dispose(); }
 
-        private IPhotoEntity OpenPhoto(string File)
-        {
-            var items = _parser.Parse(File)
-                               .ToDictionary(x => x.Id);
-            var image = Image.FromFile(File);
+        public IReactiveList<FilePhotoRecord> Photos { get; }
 
-            var factor = Math.Max(_thumbnailSize / image.Width, _thumbnailSize / image.Height);
-
-            var thumb = new Bitmap(image, new Size((int)(image.Width * factor), (int)(image.Height * factor)));
-            var ms = new MemoryStream();
-            thumb.Save(ms, ImageFormat.Jpeg);
-            return new MemoryPhotoEntity(items, ms.ToArray());
-        }
+        private FilePhotoRecord OpenPhoto(string File) { return new FilePhotoRecord(File); }
     }
 }
