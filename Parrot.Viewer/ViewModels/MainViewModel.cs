@@ -18,10 +18,12 @@ namespace Parrot.Viewer.ViewModels
         {
             Interactions.SingleView.RegisterHandler(c => OpenViewer(c));
 
+            var directory = App.Arguments[0];
+
             IGallerySource source =
                 new DatabaseGallerySource(
-                    new FolderGallerySource(@"C:\Users\plyusnin\Desktop\Photos"));
-            Gallery = new GalleryViewModel(new FolderAlbum(source, @"C:\Users\plyusnin\Desktop\Photos"));
+                    new FolderGallerySource(directory));
+            Gallery = new GalleryViewModel(new FolderAlbum(source, directory));
 
             CloseViewer = ReactiveCommand.CreateFromTask(async () =>
                                                          {
