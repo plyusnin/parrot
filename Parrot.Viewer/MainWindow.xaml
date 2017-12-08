@@ -51,6 +51,13 @@
             
             <DoubleAnimation Storyboard.TargetName="Shader" Storyboard.TargetProperty="Opacity"
                              Duration="0:0:0.3" />
+
+            <BooleanAnimationUsingKeyFrames Storyboard.TargetName="Viewer" Storyboard.TargetProperty="IsAnimatedRightNow">
+                <BooleanAnimationUsingKeyFrames.KeyFrames>
+                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.0" Value="True" />
+                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.3" Value="False" />
+                </BooleanAnimationUsingKeyFrames.KeyFrames>
+            </BooleanAnimationUsingKeyFrames>
         </Storyboard>
     </Window.Resources>
     

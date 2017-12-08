@@ -1,28 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Parrot.Viewer.Views
 {
-    /// <summary>
-    /// Логика взаимодействия для SingleView.xaml
-    /// </summary>
+    /// <summary>Логика взаимодействия для SingleView.xaml</summary>
     public partial class SingleView : UserControl
     {
-        public SingleView()
+        public static readonly DependencyProperty IsAnimatedRightNowProperty = DependencyProperty.Register(
+            "IsAnimatedRightNow", typeof(bool), typeof(SingleView), new PropertyMetadata(default(bool), PropertyChangedCallback));
+
+        private static void PropertyChangedCallback(DependencyObject O, DependencyPropertyChangedEventArgs args)
         {
-            InitializeComponent();
+            //((SingleView)O).Picture.SetValue(RenderOptions.BitmapScalingModeProperty, args.NewValue ? BitmapScalingMode.NearestNeighbor : BitmapScalingMode.Fant);
+        }
+
+        public SingleView() { InitializeComponent(); }
+
+        public bool IsAnimatedRightNow
+        {
+            get => (bool)GetValue(IsAnimatedRightNowProperty);
+            set => SetValue(IsAnimatedRightNowProperty, value);
         }
     }
 }

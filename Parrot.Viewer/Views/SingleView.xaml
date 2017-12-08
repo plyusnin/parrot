@@ -8,7 +8,7 @@
              xmlns:single="clr-namespace:Parrot.Viewer.ViewModels.Single"
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
-             mc:Ignorable="d"
+             mc:Ignorable="d" Name="Root"
              d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance single:SingleViewModel}">
     <Grid>
@@ -26,6 +26,12 @@
         </ei:DataTrigger>
         <ei:DataTrigger Binding="{Binding Picture}" Value="{x:Null}" Comparison="Equal">
             <ei:ChangePropertyAction TargetName="Picture" PropertyName="Opacity" Value="0" />
+        </ei:DataTrigger>
+        <ei:DataTrigger Binding="{Binding ElementName=Root, Path=IsAnimatedRightNow}" Value="True">
+            <ei:ChangePropertyAction TargetName="Picture" PropertyName="Visibility" Value="Hidden" />
+        </ei:DataTrigger>
+        <ei:DataTrigger Binding="{Binding ElementName=Root, Path=IsAnimatedRightNow}" Value="False">
+            <ei:ChangePropertyAction TargetName="Picture" PropertyName="Visibility" Value="Visible" />
         </ei:DataTrigger>
     </i:Interaction.Triggers>
 </UserControl>
