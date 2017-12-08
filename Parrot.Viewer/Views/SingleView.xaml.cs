@@ -9,12 +9,7 @@ namespace Parrot.Viewer.Views
     public partial class SingleView : UserControl
     {
         public static readonly DependencyProperty IsAnimatedRightNowProperty = DependencyProperty.Register(
-            "IsAnimatedRightNow", typeof(bool), typeof(SingleView), new PropertyMetadata(default(bool), PropertyChangedCallback));
-
-        private static void PropertyChangedCallback(DependencyObject O, DependencyPropertyChangedEventArgs args)
-        {
-            //((SingleView)O).Picture.SetValue(RenderOptions.BitmapScalingModeProperty, args.NewValue ? BitmapScalingMode.NearestNeighbor : BitmapScalingMode.Fant);
-        }
+            "IsAnimatedRightNow", typeof(bool), typeof(SingleView), new PropertyMetadata(default(bool)));
 
         public SingleView() { InitializeComponent(); }
 

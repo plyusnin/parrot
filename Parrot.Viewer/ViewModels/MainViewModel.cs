@@ -12,6 +12,7 @@ namespace Parrot.Viewer.ViewModels
 {
     public class MainViewModel : ReactiveObject
     {
+        private bool _fullScreenMode;
         private SingleViewModel _single;
 
         public MainViewModel()
@@ -33,9 +34,12 @@ namespace Parrot.Viewer.ViewModels
                                                          },
                                                          this.WhenAnyValue(x => x.Single)
                                                              .Select(s => s != null));
+
+            SwitchFullScreen = ReactiveCommand.Create(() => FullScreenMode = !FullScreenMode);
         }
 
         public ReactiveCommand<Unit, Unit> CloseViewer { get; }
+        public ReactiveCommand<Unit, bool> SwitchFullScreen { get; }
 
         public GalleryViewModel Gallery { get; }
 
@@ -43,6 +47,12 @@ namespace Parrot.Viewer.ViewModels
         {
             get => _single;
             set => this.RaiseAndSetIfChanged(ref _single, value);
+        }
+
+        public bool FullScreenMode
+        {
+            get => _fullScreenMode;
+            set => this.RaiseAndSetIfChanged(ref _fullScreenMode, value);
         }
 
         private void OpenViewer(InteractionContext<ViewAlbumRequest, Unit> Context)
