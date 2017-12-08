@@ -7,6 +7,7 @@ namespace Parrot.Viewer.UserInteractions
     public static class Interactions
     {
         public static Interaction<ViewAlbumRequest, Unit> SingleView { get; } = new Interaction<ViewAlbumRequest, Unit>();
+        public static Interaction<Unit, Unit> CloseViewer { get; } = new Interaction<Unit, Unit>();
     }
 
     public class ViewAlbumRequest

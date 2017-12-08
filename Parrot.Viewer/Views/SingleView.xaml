@@ -6,14 +6,26 @@
              xmlns:local="clr-namespace:Parrot.Viewer.Views"
              xmlns:controls="clr-namespace:Parrot.Viewer.Views.Controls"
              xmlns:single="clr-namespace:Parrot.Viewer.ViewModels.Single"
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+             xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
              mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="300" Focusable="True"
+             d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance single:SingleViewModel}">
-    <UserControl.InputBindings>
-        <KeyBinding Key="Right" Command="{Binding Next}" />
-        <KeyBinding Key="Left" Command="{Binding Previous}" />
-    </UserControl.InputBindings>
     <Grid>
-        <controls:ImagePointer Source="{Binding Picture}" />
+        <Image Source="{Binding PicturePreview}">
+            <Image.Effect>
+                <BlurEffect Radius="25" RenderingBias="Performance" />
+            </Image.Effect>
+        </Image>
+        <Image Name="Picture" Source="{Binding Picture, IsAsync=True}" RenderOptions.BitmapScalingMode="Fant" Opacity="0" />
+        <!--<controls:ImagePointer Source="{Binding Picture}" />-->
     </Grid>
+    <i:Interaction.Triggers>
+        <ei:DataTrigger Binding="{Binding Picture}" Value="{x:Null}" Comparison="NotEqual">
+            <ei:ChangePropertyAction TargetName="Picture" PropertyName="Opacity" Value="1" Duration="0:0:0.2" />
+        </ei:DataTrigger>
+        <ei:DataTrigger Binding="{Binding Picture}" Value="{x:Null}" Comparison="Equal">
+            <ei:ChangePropertyAction TargetName="Picture" PropertyName="Opacity" Value="0" />
+        </ei:DataTrigger>
+    </i:Interaction.Triggers>
 </UserControl>

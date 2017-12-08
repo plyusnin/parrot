@@ -23,13 +23,14 @@ namespace Parrot.Viewer.ViewModels
                     new FolderGallerySource(@"C:\Users\plyusnin\Desktop\Photos"));
             Gallery = new GalleryViewModel(new FolderAlbum(source, @"C:\Users\plyusnin\Desktop\Photos"));
 
-            CloseViewer = ReactiveCommand.Create(() =>
-                                                 {
-                                                     Single?.Dispose();
-                                                     Single = null;
-                                                 },
-                                                 this.WhenAnyValue(x => x.Single)
-                                                     .Select(s => s != null));
+            CloseViewer = ReactiveCommand.CreateFromTask(async () =>
+                                                         {
+                                                             await Interactions.CloseViewer.Handle(Unit.Default);
+                                                             Single?.Dispose();
+                                                             Single = null;
+                                                         },
+                                                         this.WhenAnyValue(x => x.Single)
+                                                             .Select(s => s != null));
         }
 
         public ReactiveCommand<Unit, Unit> CloseViewer { get; }

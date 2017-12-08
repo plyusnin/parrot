@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -14,7 +13,9 @@ namespace Parrot.Viewer.ViewModels.Single
     public class SingleViewModel : ReactiveObject, IDisposable
     {
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
+
         private readonly ObservableAsPropertyHelper<ImageSource> _picture;
+        private readonly ObservableAsPropertyHelper<ImageSource> _picturePreview;
 
         private int _index;
 
@@ -24,22 +25,27 @@ namespace Parrot.Viewer.ViewModels.Single
 
             this.WhenAnyValue(x => x.Index)
                 .Select(i => Album.Photos[i])
-                .Select(CreateImageSource)
+                .SelectMany(f => Observable.Start(() => CreateImageSource(f))
+                                           .StartWith((ImageSource)null))
+                .ObserveOnDispatcher()
                 .ToProperty(this, x => x.Picture, out _picture)
                 .DisposeWith(_disposeOnExit);
 
-            Next = ReactiveCommand.Create(() => Index += 1,
-                                          this.WhenAnyValue(x => x.Index)
-                                              .Select(i => i > 0));
-            Previous = ReactiveCommand.Create(() => Index -= 1,
-                                              this.WhenAnyValue(x => x.Index)
-                                                  .Select(i => i < Album.Photos.Count - 1));
+            this.WhenAnyValue(x => x.Index)
+                .Select(i => Album.Photos[i])
+                .Select(CreatePreviewImageSource)
+                .ToProperty(this, x => x.PicturePreview, out _picturePreview)
+                .DisposeWith(_disposeOnExit);
+
+            Next = ReactiveCommand.Create(() => Index += 1, this.WhenAnyValue(x => x.Index).Select(i => i < Album.Photos.Count - 1));
+            Previous = ReactiveCommand.Create(() => Index -= 1, this.WhenAnyValue(x => x.Index).Select(i => i > 0));
         }
 
         public ReactiveCommand<Unit, int> Next { get; }
         public ReactiveCommand<Unit, int> Previous { get; }
 
         public ImageSource Picture => _picture.Value;
+        public ImageSource PicturePreview => _picturePreview.Value;
 
         public int Index
         {
@@ -49,14 +55,21 @@ namespace Parrot.Viewer.ViewModels.Single
 
         public void Dispose() { _disposeOnExit?.Dispose(); }
 
-        private ImageSource CreateImageSource(IPhotoEntity Photo)
+        private ImageSource CreatePreviewImageSource(IPhotoEntity Photo)
         {
             var bitmapimage = new BitmapImage();
             bitmapimage.BeginInit();
-            bitmapimage.StreamSource = File.OpenRead(Photo.FileName);
-            bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapimage.StreamSource = Photo.Thumbnail;
+            bitmapimage.CacheOption = BitmapCacheOption.OnDemand;
             bitmapimage.EndInit();
             return bitmapimage;
+        }
+
+        private ImageSource CreateImageSource(IPhotoEntity Photo)
+        {
+            var decoder = new JpegBitmapDecoder(new Uri(Photo.FileName), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            decoder.Frames[0].Freeze();
+            return decoder.Frames[0];
         }
     }
 }

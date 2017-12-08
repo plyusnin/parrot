@@ -7,7 +7,7 @@
              mc:Ignorable="d" Name="Root" ClipToBounds="True"
              d:DesignHeight="300" d:DesignWidth="300"
              Background="Transparent">
-    <Image Name="MyImage" Source="{Binding ElementName=Root, Path=Source}">
+    <Image Name="MyImage" Source="{Binding ElementName=Root, Path=Source}" RenderOptions.BitmapScalingMode="Fant">
         <Image.RenderTransform>
             <ScaleTransform x:Name="ImageTransform" />
         </Image.RenderTransform>
