@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using photo.exif;
 using Parrot.Viewer.GallerySources.Database.Entities;
 using ReactiveUI;
 
@@ -14,10 +13,10 @@ namespace Parrot.Viewer.GallerySources.Database
 {
     public class DatabaseGallerySource : IGallerySource, IDisposable
     {
-        private ExifManager _exifManager = new ExifManager();
         private readonly IFileGallerySource _core;
         private readonly GalleryContext _db;
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
+        private readonly ExifManager _exifManager = new ExifManager();
         private readonly double _thumbnailSize = 300.0;
 
         public DatabaseGallerySource(IFileGallerySource Core)
@@ -46,19 +45,24 @@ namespace Parrot.Viewer.GallerySources.Database
             var record = _db.Photos.FirstOrDefault(f => f.File == fileName);
             if (record == null)
             {
-                var image = Image.FromFile(fileName);
-                var factor = Math.Max(_thumbnailSize / image.Width, _thumbnailSize / image.Height);
+                using (var ms = new MemoryStream())
+                {
+                    using (var image = Image.FromFile(fileName))
+                    {
+                        var factor = Math.Max(_thumbnailSize / image.Width, _thumbnailSize / image.Height);
 
-                var thumb = new Bitmap(image, new Size((int)(image.Width * factor), (int)(image.Height * factor)));
-                var ms = new MemoryStream();
-                thumb.Save(ms, ImageFormat.Jpeg);
+                        using (var thumb = new Bitmap(image, new Size((int)(image.Width * factor), (int)(image.Height * factor))))
+                        {
+                            thumb.Save(ms, ImageFormat.Jpeg);
+                        }
+                    }
 
-
-                record = new DbPhotoRecord
-                         {
-                             File = fileName,
-                             Thumbnail = ms.ToArray()
-                         };
+                    record = new DbPhotoRecord
+                             {
+                                 File = fileName,
+                                 Thumbnail = ms.ToArray()
+                             };
+                }
 
                 _db.Photos.Add(record);
                 _db.SaveChanges();
