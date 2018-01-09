@@ -17,7 +17,7 @@ namespace Parrot.Viewer.GallerySources.Database
         private readonly GalleryContext _db;
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
         private readonly ExifManager _exifManager = new ExifManager();
-        private readonly double _thumbnailSize = 300.0;
+        private readonly double _thumbnailSize = 240.0;
 
         public DatabaseGallerySource(IFileGallerySource Core)
         {
