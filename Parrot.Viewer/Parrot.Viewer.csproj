@@ -110,12 +110,17 @@
     <Compile Include="GallerySources\FolderGallerySource.cs" />
     <Compile Include="UserInteractions\Interactions.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\Map\MapViewModel.cs" />
+    <Compile Include="ViewModels\Map\PhotoMapElement.cs" />
     <Compile Include="ViewModels\Single\SingleViewModel.cs" />
     <Compile Include="ViewModels\Tiles\GalleryViewModel.cs" />
     <Compile Include="GallerySources\IGallerySource.cs" />
     <Compile Include="ViewModels\Tiles\TileViewModel.cs" />
     <Compile Include="Views\Controls\ImagePointer.xaml.cs">
       <DependentUpon>ImagePointer.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\MapView.xaml.cs">
+      <DependentUpon>MapView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\SingleView.xaml.cs">
       <DependentUpon>SingleView.xaml</DependentUpon>
@@ -136,6 +141,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\Controls\ImagePointer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MapView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -182,6 +191,10 @@
     <ProjectReference Include="..\Geographics\Geographics.csproj">
       <Project>{4EAF91DF-7A6C-4F0E-B15B-F372CE42C8D0}</Project>
       <Name>Geographics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MapViewControl\MapVisualization.csproj">
+      <Project>{E4D20511-9FEB-4102-BEE2-208B124C60C4}</Project>
+      <Name>MapVisualization</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

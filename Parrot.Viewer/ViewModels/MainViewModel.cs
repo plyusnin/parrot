@@ -3,6 +3,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using Parrot.Viewer.GallerySources;
 using Parrot.Viewer.GallerySources.Database;
+using Parrot.Viewer.ViewModels.Map;
 using Parrot.Viewer.ViewModels.Single;
 using Parrot.Viewer.ViewModels.Tiles;
 using ReactiveUI;
@@ -32,10 +33,13 @@ namespace Parrot.Viewer.ViewModels
             Gallery.WhenAnyValue(x => x.SelectedPhotoIndex)
                    .Subscribe(i => Single.Index = i);
 
+            Map = new MapViewModel(source);
+
             SwitchFullScreen = ReactiveCommand.Create(() => FullScreenMode = !FullScreenMode);
         }
 
         public SingleViewModel Single => _single.Value;
+        public MapViewModel    Map    { get; }
 
         public ReactiveCommand<Unit, bool> SwitchFullScreen { get; }
 

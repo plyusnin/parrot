@@ -44,6 +44,9 @@
                     <Setter Property="Template" Value="{StaticResource TabTemplate}" />
                 </Style>
             </TabControl.Resources>
+            <TabItem Header="Карта">
+                <views:MapView DataContext="{Binding Map}" />
+            </TabItem>
             <TabItem Header="Галерея">
                 <views:TilesView DataContext="{Binding Gallery}" />
             </TabItem>

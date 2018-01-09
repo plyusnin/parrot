@@ -1,0 +1,15 @@
+﻿<UserControl x:Class="Parrot.Viewer.Views.MapView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Parrot.Viewer.Views"
+             xmlns:map="clr-namespace:Parrot.Viewer.ViewModels.Map"
+             xmlns:mapControl="clr-namespace:MapVisualization;assembly=MapVisualization"
+             d:DataContext="{d:DesignInstance map:MapViewModel}">
+    <Grid>
+        <mapControl:MapView CentralPoint="{Binding MapCenter}" ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+                            ElementsSource="{Binding MapElements}" TileLoader="{Binding TileLoader}"
+                            Focusable="True" />
+    </Grid>
+</UserControl>
