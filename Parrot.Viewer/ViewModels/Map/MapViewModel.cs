@@ -43,9 +43,9 @@ namespace Parrot.Viewer.ViewModels.Map
 
         private IList<MapElement> StackPhotos(int Zoom)
         {
-            var factor = (1 << (25 - Zoom)) - 1;
+            double factor = Math.Pow(2, 24 - Zoom);
 
-            int Round(double value) { return (int)value & ~factor; }
+            int Round(double value) { return (int)Math.Round(value / factor); }
 
             if (Zoom == 0)
                 return new List<MapElement>();
