@@ -75,6 +75,14 @@ namespace MapVisualization
 
         private void ElementsSourceOnCollectionChanged(object Sender, NotifyCollectionChangedEventArgs e)
         {
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                foreach (var element in _elements.ToList())
+                    RemoveElement(element);
+                foreach (var element in (IEnumerable<MapElement>)Sender)
+                    AddElement(element);
+            }
+
             if (e.NewItems != null)
             {
                 foreach (MapElement element in e.NewItems.OfType<MapElement>())

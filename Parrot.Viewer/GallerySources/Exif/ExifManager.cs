@@ -36,8 +36,8 @@ namespace Parrot.Viewer.GallerySources.Exif
             var lam = latitudeRef.ToLower() == "s" ? -1 : 1;
             var lom = longitudeRef.ToLower() == "w" ? -1 : 1;
 
-            return new EarthPoint(new Degree(lam * (int)latitude[0],  latitude[1]),
-                                  new Degree(lom * (int)longitude[0], longitude[1]));
+            return new EarthPoint(new Degree(lam * (int)latitude[0],  latitude[1],  latitude[2]),
+                                  new Degree(lom * (int)longitude[0], longitude[1], longitude[2]));
         }
     }
 }
