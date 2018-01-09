@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Parrot.Viewer.GallerySources
+namespace Parrot.Viewer.GallerySources.Exif
 {
     public class ExifInformation
     {

@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
+using LiteDB;
 using Parrot.Viewer.GallerySources.Database.Entities;
+using Parrot.Viewer.GallerySources.Exif;
+using Parrot.Viewer.GallerySources.Thumbnails;
 using ReactiveUI;
 
 namespace Parrot.Viewer.GallerySources.Database
@@ -14,63 +13,60 @@ namespace Parrot.Viewer.GallerySources.Database
     public class DatabaseGallerySource : IGallerySource, IDisposable
     {
         private readonly IFileGallerySource _core;
-        private readonly GalleryContext _db;
+        private readonly LiteDatabase _db;
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
         private readonly ExifManager _exifManager = new ExifManager();
-        private readonly double _thumbnailSize = 240.0;
+        private readonly LiteCollection<DbPhotoRecord> _photos;
+        private readonly ThumbnailFactory _thumbnailFactory = new ThumbnailFactory();
 
         public DatabaseGallerySource(IFileGallerySource Core)
         {
-            Photos = new ReactiveList<IPhotoEntity>();
-            _db = new GalleryContext()
+            _db = new LiteDatabase("gallery.db")
                 .DisposeWith(_disposeOnExit);
 
-            _core = Core;
-            foreach (var photo in _core.Photos)
-                OnCorePhotoAdded(photo);
+            _photos = _db.GetCollection<DbPhotoRecord>("photos");
 
-            _core.Photos.ItemsAdded
-                 .SubscribeOn(TaskPoolScheduler.Default)
-                 .Subscribe(OnCorePhotoAdded)
-                 .DisposeWith(_disposeOnExit);
+            _core = Core;
+            Photos = _core.Photos
+                          .CreateDerivedCollection(Load, scheduler: TaskPoolScheduler.Default)
+                          .DisposeWith(_disposeOnExit);
         }
 
         public void Dispose() { _disposeOnExit.Dispose(); }
 
-        public IReactiveList<IPhotoEntity> Photos { get; }
+        public IReactiveDerivedList<IPhotoEntity> Photos { get; }
 
-        private void OnCorePhotoAdded(FilePhotoRecord Photo)
+        private DatabasePhotoEntity Load(FilePhotoRecord Photo)
         {
             var fileName = Photo.FileName;
-            var record = _db.Photos.FirstOrDefault(f => f.File == fileName);
+            var record = _photos.FindOne(p => p.FileName == fileName);
             if (record == null)
             {
-                using (var ms = new MemoryStream())
-                {
-                    using (var image = Image.FromFile(fileName))
-                    {
-                        var factor = Math.Max(_thumbnailSize / image.Width, _thumbnailSize / image.Height);
-
-                        using (var thumb = new Bitmap(image, new Size((int)(image.Width * factor), (int)(image.Height * factor))))
-                        {
-                            thumb.Save(ms, ImageFormat.Jpeg);
-                        }
-                    }
-
-                    record = new DbPhotoRecord
-                             {
-                                 File = fileName,
-                                 Thumbnail = ms.ToArray()
-                             };
-                }
-
-                _db.Photos.Add(record);
-                _db.SaveChanges();
+                var exif = _exifManager.Load(fileName);
+                record = new DbPhotoRecord
+                         {
+                             FileName = fileName,
+                             Aperture = exif.Aperture,
+                             Camera = exif.Camera,
+                             Iso = exif.Iso,
+                             ShotTime = exif.ShotTime,
+                             ShutterSpeed = exif.ShutterSpeed
+                         };
+                _photos.Insert(record);
+                _photos.EnsureIndex(x => x.FileName);
+                var thumbnail = new MemoryStream(_thumbnailFactory.GenerateThumbnail(fileName));
+                _db.FileStorage.Upload($"$/thumbnails/{record.Id}.jpg", $"{record.Id}.jpg",
+                                       thumbnail);
             }
 
-            var exif = _exifManager.Load(fileName);
-            var entity = new PhotoEntity(fileName, record.Thumbnail, exif);
-            Photos.Add(entity);
+            return new DatabasePhotoEntity(_db,
+                                           record.Id,
+                                           fileName,
+                                           new ExifInformation(record.Aperture,
+                                                               record.ShutterSpeed,
+                                                               record.Iso,
+                                                               record.Camera,
+                                                               record.ShotTime));
         }
     }
 }

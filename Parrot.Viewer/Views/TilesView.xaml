@@ -24,9 +24,7 @@
                 <DataTemplate>
                     <Border>
                         <Border.CacheMode>
-                            <BitmapCache EnableClearType="False"
-                                         RenderAtScale="1"
-                                         SnapsToDevicePixels="False" />
+                            <BitmapCache RenderAtScale="1" />
                         </Border.CacheMode>
                         <Border.InputBindings>
                             <MouseBinding Gesture="LeftDoubleClick"

@@ -59,7 +59,7 @@ namespace Parrot.Viewer.ViewModels.Single
         {
             var bitmapimage = new BitmapImage();
             bitmapimage.BeginInit();
-            bitmapimage.StreamSource = Photo.Thumbnail;
+            bitmapimage.StreamSource = Photo.OpenThumbnail();
             bitmapimage.CacheOption = BitmapCacheOption.OnDemand;
             bitmapimage.EndInit();
             return bitmapimage;

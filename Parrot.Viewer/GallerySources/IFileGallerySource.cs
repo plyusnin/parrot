@@ -1,6 +1,6 @@
 ﻿using ReactiveUI;
 
-namespace Parrot.Viewer.GallerySources.Database
+namespace Parrot.Viewer.GallerySources
 {
     public interface IFileGallerySource
     {

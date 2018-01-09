@@ -1,12 +1,12 @@
 ﻿using System.IO;
 using System.Windows.Media.Imaging;
-using Parrot.Viewer.GallerySources;
+using Parrot.Viewer.GallerySources.Exif;
 
 namespace Parrot.Viewer.ViewModels.Tiles
 {
     public class TileViewModel
     {
-        public TileViewModel(Stream ThumbnailStream, ExifInformation Exif)
+        public TileViewModel(ExifInformation Exif, Stream ThumbnailStream)
         {
             this.Exif = Exif;
             Thumbnail = new BitmapImage();

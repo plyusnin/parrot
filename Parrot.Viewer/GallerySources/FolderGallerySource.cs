@@ -3,8 +3,6 @@ using System.IO;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
-using photo.exif;
 using Parrot.Viewer.GallerySources.Database;
 using ReactiveUI;
 
@@ -21,9 +19,9 @@ namespace Parrot.Viewer.GallerySources
             _root = Root;
             Photos = new ReactiveList<FilePhotoRecord>();
 
-            Directory.EnumerateFiles(_root, "*.jpg")
+            Directory.EnumerateFiles(_root, "*.jpg", SearchOption.AllDirectories)
                      .ToObservable()
-                     .SubscribeOn(TaskPoolScheduler.Default)
+                     //.SubscribeOn(TaskPoolScheduler.Default)
                      .Select(OpenPhoto)
                      .Subscribe(Photos.Add)
                      .DisposeWith(_disposeOnExit);

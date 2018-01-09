@@ -1,15 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
 
 namespace Parrot.Viewer.GallerySources.Database.Entities
 {
-    [Table("Photos")]
     public class DbPhotoRecord
     {
-        [Key]
         public int Id { get; set; }
+        public string FileName { get; set; }
 
-        public string File { get; set; }
-        public byte[] Thumbnail { get; set; }
+        public string Aperture { get; set; }
+        public string ShutterSpeed { get; set; }
+        public string Iso { get; set; }
+        public string Camera { get; set; }
+        public DateTime ShotTime { get; set; }
     }
 }

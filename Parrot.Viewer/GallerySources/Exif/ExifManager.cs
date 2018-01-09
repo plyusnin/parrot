@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using photo.exif;
 
-namespace Parrot.Viewer.GallerySources.Database
+namespace Parrot.Viewer.GallerySources.Exif
 {
     public class ExifManager
     {

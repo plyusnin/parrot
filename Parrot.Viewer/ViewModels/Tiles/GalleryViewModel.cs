@@ -17,7 +17,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
         {
             _album = Album;
             Tiles = Album.Photos
-                         .CreateDerivedCollection(f => new TileViewModel(f.Thumbnail, f.Exif),
+                         .CreateDerivedCollection(f => new TileViewModel(f.Exif, f.OpenThumbnail()),
                                                   scheduler: DispatcherScheduler.Current);
 
             Open = ReactiveCommand.CreateFromTask<TileViewModel, Unit>(OpenViewer);
