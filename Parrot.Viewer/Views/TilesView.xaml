@@ -8,7 +8,9 @@
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
-        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent">
+        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  BorderThickness="0" Background="Transparent"
+                  SelectedIndex="{Binding SelectedPhotoIndex}">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel ItemHeight="130" ItemWidth="130" HorizontalAlignment="Center" />
@@ -26,11 +28,11 @@
                         <Border.CacheMode>
                             <BitmapCache RenderAtScale="1" />
                         </Border.CacheMode>
-                        <Border.InputBindings>
+                        <!--<Border.InputBindings>
                             <MouseBinding Gesture="LeftDoubleClick"
                                           Command="{Binding Path=DataContext.Open, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
                                           CommandParameter="{Binding}" />
-                        </Border.InputBindings>
+                        </Border.InputBindings>-->
                         <Grid>
                             <Rectangle Fill="Black" Opacity="0.15">
                                 <Rectangle.RenderTransform>

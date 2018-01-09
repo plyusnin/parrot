@@ -1,37 +1,59 @@
-﻿using System.Collections.Generic;
-using System.Reactive;
+﻿using System;
 using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using Parrot.Viewer.Albums;
-using Parrot.Viewer.UserInteractions;
+using Parrot.Viewer.GallerySources;
 using ReactiveUI;
 
 namespace Parrot.Viewer.ViewModels.Tiles
 {
-    public class GalleryViewModel : ReactiveObject
+    public class GalleryViewModel : ReactiveObject, IDisposable
     {
-        private readonly IAlbum _album;
+        private readonly ObservableAsPropertyHelper<FolderAlbum> _album;
 
-        public GalleryViewModel(IAlbum Album)
+        private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
+        private readonly IGallerySource _gallery;
+        private readonly ObservableAsPropertyHelper<IReactiveDerivedList<TileViewModel>> _tiles;
+
+        private string _directory;
+        private int _selectedPhotoIndex;
+
+        public GalleryViewModel(IGallerySource Gallery)
         {
-            _album = Album;
-            Tiles = Album.Photos
-                         .CreateDerivedCollection(f => new TileViewModel(f.Exif, f.OpenThumbnail()),
-                                                  scheduler: DispatcherScheduler.Current);
+            _gallery = Gallery;
 
-            Open = ReactiveCommand.CreateFromTask<TileViewModel, Unit>(OpenViewer);
+            this.WhenAnyValue(x => x.Directory)
+                .Where(dir => dir != null)
+                .Select(dir => new FolderAlbum(_gallery, dir))
+                .ToProperty(this, x => x.Album, out _album)
+                .DisposeWith(_disposeOnExit);
+
+            this.WhenAnyValue(x => x.Album)
+                .Where(a => a != null)
+                .Select(a => a.Photos
+                              .CreateDerivedCollection(f => new TileViewModel(f.Exif, f.OpenThumbnail()),
+                                                       scheduler: DispatcherScheduler.Current))
+                .ToProperty(this, x => x.Tiles, out _tiles)
+                .DisposeWith(_disposeOnExit);
         }
 
-        public IReactiveDerivedList<TileViewModel> Tiles { get; }
-        public ReactiveCommand<TileViewModel, Unit> Open { get; }
+        public FolderAlbum Album => _album.Value;
 
-        private async Task<Unit> OpenViewer(TileViewModel Tile)
+        public int SelectedPhotoIndex
         {
-            var index = ((IList<TileViewModel>)Tiles).IndexOf(Tile);
-            await Interactions.SingleView.Handle(new ViewAlbumRequest(_album, index));
-
-            return Unit.Default;
+            get => _selectedPhotoIndex;
+            set => this.RaiseAndSetIfChanged(ref _selectedPhotoIndex, value);
         }
+
+        public string Directory
+        {
+            get => _directory;
+            set => this.RaiseAndSetIfChanged(ref _directory, value);
+        }
+
+        public IReactiveDerivedList<TileViewModel> Tiles => _tiles.Value;
+
+        public void Dispose() { _disposeOnExit?.Dispose(); }
     }
 }
