@@ -1,34 +1,43 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
-using System.Linq;
-using photo.exif;
+using ExifLib;
+using Geographics;
 
 namespace Parrot.Viewer.GallerySources.Exif
 {
     public class ExifManager
     {
-        private readonly Parser _parser = new Parser();
-
         public ExifInformation Load(string FileName)
         {
-            var exif = _parser.Parse(FileName).ToDictionary(x => x.Id);
+            using (var reader = new ExifReader(FileName))
+            {
+                var aperture     = reader.GetTagValueOrDefault<double, string>(ExifTags.FNumber,      a => $"f/{a.ToString(CultureInfo.InvariantCulture)}");
+                var shutterSpeed = reader.GetTagValueOrDefault<double, string>(ExifTags.ExposureTime, v => v < 1 ? $"1/{1 / v}" : $"{v}\"");
+                var iso          = reader.GetTagValueOrDefault(ExifTags.PhotographicSensitivity)?.ToString();
+                var camera       = $"{reader.GetTagValueOrDefault<string>(ExifTags.Make)} {reader.GetTagValueOrDefault<string>(ExifTags.Model)}";
+                var shotTime     = reader.GetTagValueOrDefault(ExifTags.DateTimeDigitized, File.GetCreationTime(FileName));
 
-            var a = (URational)exif[0x829d].Value;
-            var aString = ((double)a.Numerator / a.Denominator).ToString(CultureInfo.InvariantCulture);
+                var gps = GetGpsPosition(reader);
 
-            var time = exif[36867].Value.ToString().TrimEnd('\0');
+                return new ExifInformation(aperture, shutterSpeed, iso, camera, shotTime, gps);
+            }
+        }
 
-            if (!DateTime.TryParseExact(time, "yyyy:MM:dd HH:mm:ss", CultureInfo.CurrentCulture, DateTimeStyles.None, out var dateTaken))
-                dateTaken = File.GetCreationTime(FileName);
+        private static EarthPoint? GetGpsPosition(ExifReader reader)
+        {
+            var latitudeRef  = reader.GetTagValueOrDefault(ExifTags.GPSLatitudeRef,  "N");
+            var longitudeRef = reader.GetTagValueOrDefault(ExifTags.GPSLongitudeRef, "E");
+            var latitude     = reader.GetTagValueOrDefault<double[]>(ExifTags.GPSLatitude);
+            var longitude    = reader.GetTagValueOrDefault<double[]>(ExifTags.GPSLongitude);
 
-            var info = new ExifInformation("f/" + aString,
-                                           exif[33434].Value.ToString(),
-                                           exif[0x8827].Value.ToString(),
-                                           exif[271].Value.ToString().TrimEnd('\0') + " " + exif[272].Value.ToString().TrimEnd('\0'),
-                                           dateTaken);
+            if (latitude == null || longitude == null)
+                return null;
 
-            return info;
+            var lam = latitudeRef.ToLower() == "s" ? -1 : 1;
+            var lom = longitudeRef.ToLower() == "w" ? -1 : 1;
+
+            return new EarthPoint(new Degree(lam * (int)latitude[0],  latitude[1]),
+                                  new Degree(lom * (int)longitude[0], longitude[1]));
         }
     }
 }
