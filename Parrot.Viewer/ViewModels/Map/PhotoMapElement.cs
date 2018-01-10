@@ -45,18 +45,19 @@ namespace Parrot.Viewer.ViewModels.Map
             if (Zoom < 12) radius   /= 2;
 
             dc.DrawEllipse(new ImageBrush(_thumbnail.Value) { Stretch = Stretch.UniformToFill },
-                           new Pen(Brushes.DarkSlateGray, 1.5),
+                           new Pen(new SolidColorBrush(Color.FromArgb(255, 124, 99, 50)), 1.8),
                            new Point(),
                            radius, radius);
 
             if (_photosCount > 1)
             {
-                dc.DrawEllipse(Brushes.DodgerBlue,
-                               new Pen(Brushes.White, 0.5),
+                dc.DrawEllipse(new SolidColorBrush(Color.FromArgb(255, 232, 182, 82)),
+                               null,
                                new Point(radius * 0.8, -radius * 0.8),
                                10, 10);
 
-                var ft = new FormattedText(_photosCount.ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, _typeface, 12, Brushes.White);
+                var ft = new FormattedText(_photosCount.ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, _typeface, 12,
+                                           Brushes.White);
                 dc.DrawText(ft, new Point(radius * 0.8 - ft.Width * 0.5, -radius * 0.8 - ft.Height * 0.5));
             }
         }

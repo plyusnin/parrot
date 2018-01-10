@@ -11,6 +11,11 @@
         {
             get { return new TilePathProvider("Retina Tiles Cache", "https://c.osm.rrze.fau.de/osmhd/{zoom}/{x}/{y}.png"); }
         }
+
+        public static ITilePathProvider LyrkRetina
+        {
+            get { return new TilePathProvider("Lirk Retina Tiles Cache", "https://tiles.lyrk.org/lr/{zoom}/{x}/{y}"); }
+        }
     }
 
     public static class YandexTilePathProviders

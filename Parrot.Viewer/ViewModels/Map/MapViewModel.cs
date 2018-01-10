@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using Geographics;
+using MapVisualization;
 using MapVisualization.Elements;
 using MapVisualization.TileLoaders;
 using MapVisualization.TileLoaders.TilePathProvider;
@@ -19,7 +20,7 @@ namespace Parrot.Viewer.ViewModels.Map
         public MapViewModel(IGallerySource Gallery)
         {
             _gallery   = Gallery;
-            TileLoader = new WebTileLoader(OsmTilePathProviders.Retina);
+            TileLoader = new WebTileLoader(OsmTilePathProviders.LyrkRetina);
 
             MapElements = new ReactiveList<MapElement>();
             this.WhenAnyValue(x => x.ZoomLevel)
@@ -43,17 +44,13 @@ namespace Parrot.Viewer.ViewModels.Map
 
         private IList<MapElement> StackPhotos(int Zoom)
         {
-            double factor = Math.Pow(2, 24 - Zoom);
-
-            int Round(double value) { return (int)Math.Round(value / factor); }
-
             if (Zoom == 0)
                 return new List<MapElement>();
 
             return _gallery.Photos
                            .Where(f => f.Exif.Gps != null)
-                           .GroupBy(f => Tuple.Create(Round(Mercator.LatitudeToY(f.Exif.Gps.Value.Latitude)),
-                                                      Round(Mercator.LongitudeToX(f.Exif.Gps.Value.Longitude))))
+                           .GroupBy(f => Tuple.Create(OsmIndexes.GetVerticalIndex(f.Exif.Gps.Value.Latitude, Zoom + 1),
+                                                      OsmIndexes.GetHorizontalIndex(f.Exif.Gps.Value.Longitude, Zoom + 1)))
                            .Select(g => CreateMapElement(g.ToList()))
                            .ToList();
         }
