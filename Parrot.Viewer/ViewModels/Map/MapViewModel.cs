@@ -49,8 +49,8 @@ namespace Parrot.Viewer.ViewModels.Map
 
             return _gallery.Photos
                            .Where(f => f.Exif.Gps != null)
-                           .GroupBy(f => Tuple.Create(OsmIndexes.GetVerticalIndex(f.Exif.Gps.Value.Latitude, Zoom + 1),
-                                                      OsmIndexes.GetHorizontalIndex(f.Exif.Gps.Value.Longitude, Zoom + 1)))
+                           .GroupBy(f => Tuple.Create(OsmIndexes.GetVerticalIndex(f.Exif.Gps.Value.Latitude, Zoom + 2),
+                                                      OsmIndexes.GetHorizontalIndex(f.Exif.Gps.Value.Longitude, Zoom + 2)))
                            .Select(g => CreateMapElement(g.ToList()))
                            .ToList();
         }

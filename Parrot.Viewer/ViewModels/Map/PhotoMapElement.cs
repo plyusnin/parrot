@@ -25,6 +25,8 @@ namespace Parrot.Viewer.ViewModels.Map
             _thumbnail   = new Lazy<ImageSource>(LoadThumbnail);
         }
 
+        protected override int ZIndex => 10;
+
         private ImageSource LoadThumbnail()
         {
             var thumbnail = new BitmapImage();
@@ -35,23 +37,21 @@ namespace Parrot.Viewer.ViewModels.Map
             return thumbnail;
         }
 
-        protected override int ZIndex => 10;
-
         protected override void DrawPointElement(DrawingContext dc, int Zoom)
         {
             var radius = _previewSize / 2;
 
             if (IsMouseOver) radius *= 2;
-            if (Zoom < 12) radius   /= 2;
+            if (Zoom < 14) radius   *= 0.7;
 
             dc.DrawEllipse(new ImageBrush(_thumbnail.Value) { Stretch = Stretch.UniformToFill },
-                           new Pen(new SolidColorBrush(Color.FromArgb(255, 124, 99, 50)), 1.8),
+                           new Pen(new SolidColorBrush(Color.FromArgb(255, 102, 102, 102)), 1.5),
                            new Point(),
                            radius, radius);
 
             if (_photosCount > 1)
             {
-                dc.DrawEllipse(new SolidColorBrush(Color.FromArgb(255, 232, 182, 82)),
+                dc.DrawEllipse(new SolidColorBrush(Color.FromArgb(255, 102, 163, 230)),
                                null,
                                new Point(radius * 0.8, -radius * 0.8),
                                10, 10);
