@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using Geographics;
 using LiteDB;
@@ -14,12 +13,12 @@ namespace Parrot.Viewer.GallerySources.Database
 {
     public class DatabaseGallerySource : IGallerySource, IDisposable
     {
-        private readonly IFileGallerySource            _core;
-        private readonly LiteDatabase                  _db;
-        private readonly CompositeDisposable           _disposeOnExit = new CompositeDisposable();
-        private readonly ExifManager                   _exifManager   = new ExifManager();
+        private readonly IFileGallerySource _core;
+        private readonly LiteDatabase _db;
+        private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
+        private readonly ExifManager _exifManager = new ExifManager();
         private readonly LiteCollection<DbPhotoRecord> _photos;
-        private readonly ThumbnailFactory              _thumbnailFactory = new ThumbnailFactory();
+        private readonly ThumbnailFactory _thumbnailFactory = new ThumbnailFactory();
 
         public DatabaseGallerySource(IFileGallerySource Core)
         {
@@ -34,7 +33,10 @@ namespace Parrot.Viewer.GallerySources.Database
                           .DisposeWith(_disposeOnExit);
         }
 
-        public void Dispose() { _disposeOnExit.Dispose(); }
+        public void Dispose()
+        {
+            _disposeOnExit.Dispose();
+        }
 
         public IReactiveDerivedList<IPhotoEntity> Photos { get; }
 
@@ -50,23 +52,25 @@ namespace Parrot.Viewer.GallerySources.Database
                 {
                     var exif = _exifManager.Load(fileName);
                     record   = new DbPhotoRecord
-                               {
-                                   FileName     = fileName,
-                                   Aperture     = exif.Aperture,
-                                   Camera       = exif.Camera,
-                                   Iso          = exif.Iso,
-                                   ShotTime     = exif.ShotTime,
-                                   ShutterSpeed = exif.ShutterSpeed,
-                                   hasGps       = exif.Gps != null,
-                                   Latitude     = exif.Gps?.Latitude.ToE6Int() ?? 0,
-                                   Longitude    = exif.Gps?.Longitude.ToE6Int() ?? 0
-                               };
+                    {
+                        FileName     = fileName,
+                        Aperture     = exif.Aperture,
+                        Camera       = exif.Camera,
+                        Iso          = exif.Iso,
+                        ShotTime     = exif.ShotTime,
+                        ShutterSpeed = exif.ShutterSpeed,
+                        hasGps       = exif.Gps != null,
+                        Latitude     = exif.Gps?.Latitude.ToE6Int() ?? 0,
+                        Longitude    = exif.Gps?.Longitude.ToE6Int() ?? 0,
+                        Rotation     = exif.Rotation
+                    };
                     _photos.Insert(record);
                     _photos.EnsureIndex(x => x.FileName);
                 }
+
                 if (!_db.FileStorage.Exists($"$/thumbnails/{record.Id}.jpg"))
                 {
-                    var thumbnail = new MemoryStream(_thumbnailFactory.GenerateThumbnail(fileName));
+                    var thumbnail = new MemoryStream(_thumbnailFactory.GenerateThumbnail(fileName, record.Rotation));
                     _db.FileStorage.Upload($"$/thumbnails/{record.Id}.jpg", $"{record.Id}.jpg",
                                            thumbnail);
                 }
@@ -84,7 +88,8 @@ namespace Parrot.Viewer.GallerySources.Database
                                                                    record.Iso,
                                                                    record.Camera,
                                                                    record.ShotTime,
-                                                                   gps));
+                                                                   gps,
+                                                                   record.Rotation));
             }
             catch (Exception e)
             {

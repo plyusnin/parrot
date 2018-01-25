@@ -16,5 +16,6 @@ namespace Parrot.Viewer.GallerySources.Database.Entities
         public int  Latitude  { get; set; }
         public int  Longitude { get; set; }
         public bool hasGps    { get; set; }
+        public int  Rotation  { get; set; }
     }
 }

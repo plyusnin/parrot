@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.IO;
 using ExifLib;
 using Geographics;
@@ -16,10 +17,27 @@ namespace Parrot.Viewer.GallerySources.Exif
                 var iso          = reader.GetTagValueOrDefault(ExifTags.PhotographicSensitivity)?.ToString();
                 var camera       = $"{reader.GetTagValueOrDefault<string>(ExifTags.Make)} {reader.GetTagValueOrDefault<string>(ExifTags.Model)}";
                 var shotTime     = reader.GetTagValueOrDefault(ExifTags.DateTimeDigitized, File.GetCreationTime(FileName));
+                var rotation     = reader.GetTagValueOrDefault<ushort, int>(ExifTags.Orientation, DecodeRotation);
 
                 var gps = GetGpsPosition(reader);
 
-                return new ExifInformation(aperture, shutterSpeed, iso, camera, shotTime, gps);
+                return new ExifInformation(aperture, shutterSpeed, iso, camera, shotTime, gps, rotation);
+            }
+        }
+
+        private int DecodeRotation(ushort Orientation)
+        {
+            switch (Orientation)
+            {
+                case 0:
+                case 1:
+                    return 0;
+                case 6:
+                    return 90;
+                case 8:
+                    return 270;
+                default:
+                    throw new ArgumentException("Из EXIF считано неизвестное значение ориентации фотографии", nameof(Orientation));
             }
         }
 
