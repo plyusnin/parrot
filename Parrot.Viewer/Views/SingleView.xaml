@@ -11,14 +11,22 @@
              mc:Ignorable="d" Name="Root"
              d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance single:SingleViewModel}">
-    <Grid>
-        <Image Source="{Binding PicturePreview}">
-            <Image.Effect>
-                <BlurEffect Radius="25" RenderingBias="Performance" />
-            </Image.Effect>
-        </Image>
-        <Image Name="Picture" Source="{Binding Picture, IsAsync=True}" RenderOptions.BitmapScalingMode="Fant" Opacity="0" />
-        <!--<controls:ImagePointer Source="{Binding Picture}" />-->
+    <Grid Focusable="True">
+        <Grid.InputBindings>
+            <KeyBinding Key="Left" Command="{Binding Path=Previous}" />
+            <KeyBinding Key="Right" Command="{Binding Path=Next}" />
+        </Grid.InputBindings>
+
+        <Grid ClipToBounds="True">
+            <Image Source="{Binding PicturePreview}">
+                <Image.Effect>
+                    <BlurEffect Radius="25" RenderingBias="Performance" />
+                </Image.Effect>
+            </Image>
+            <Image Name="Picture" Source="{Binding Picture, IsAsync=True}"
+                   RenderOptions.BitmapScalingMode="Fant" Opacity="0" />
+            <!--<controls:ImagePointer Source="{Binding Picture}" />-->
+        </Grid>
     </Grid>
     <i:Interaction.Triggers>
         <ei:DataTrigger Binding="{Binding Picture}" Value="{x:Null}" Comparison="NotEqual">
