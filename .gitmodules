@@ -1,3 +1,6 @@
 [submodule "Geographics"]
 	path = Geographics
 	url = ../../NpoSaut/netGeographicsLib.git
+[submodule "MapViewControl"]
+	path = MapViewControl
+	url = ../../NpoSaut/netMapViewControlLib.git
