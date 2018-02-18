@@ -6,7 +6,7 @@ namespace Parrot.Viewer.GallerySources
 {
     public interface IGallerySource
     {
-        IReactiveDerivedList<IPhotoEntity> Photos { get; }
+        IReactiveList<IPhotoEntity> Photos { get; }
     }
 
     public interface IPhotoEntity

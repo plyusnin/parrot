@@ -9,7 +9,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
         public TileViewModel(ExifInformation Exif, Stream ThumbnailStream)
         {
             this.Exif = Exif;
-            Thumbnail = new BitmapImage();
+            Thumbnail = new BitmapImage { CreateOptions = BitmapCreateOptions.DelayCreation };
             Thumbnail.BeginInit();
             Thumbnail.StreamSource = ThumbnailStream;
             Thumbnail.CacheOption = BitmapCacheOption.OnDemand;

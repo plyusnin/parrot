@@ -31,6 +31,7 @@ namespace Parrot.Viewer.GallerySources.Exif
             {
                 case 0:
                 case 1:
+                case 3:
                     return 0;
                 case 6:
                     return 90;

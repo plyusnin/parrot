@@ -20,7 +20,7 @@ namespace Parrot.Viewer.ViewModels.Map
         public MapViewModel(IGallerySource Gallery)
         {
             _gallery   = Gallery;
-            TileLoader = new WebTileLoader(OsmTilePathProviders.LyrkRetina);
+            TileLoader = new WebTileLoader(OsmTilePathProviders.Retina);
 
             MapElements = new ReactiveList<MapElement>();
             this.WhenAnyValue(x => x.ZoomLevel)

@@ -21,8 +21,7 @@ namespace Parrot.Viewer.ViewModels
             var directory = App.Arguments[0];
 
             IGallerySource source =
-                new DatabaseGallerySource(
-                    new FolderGallerySource(directory));
+                new DatabaseGallerySource(directory);
 
             Gallery = new GalleryViewModel(source) { Directory = directory };
 
