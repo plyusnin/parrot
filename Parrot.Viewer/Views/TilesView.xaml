@@ -5,63 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Parrot.Viewer.Views"
              xmlns:tiles="clr-namespace:Parrot.Viewer.ViewModels.Tiles"
+             xmlns:tileView="clr-namespace:Parrot.Controls.TileView;assembly=Parrot.Controls.TileView"
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
-        <ListView ItemsSource="{Binding Tiles}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                  BorderThickness="0" Background="Transparent"
-                  SelectedIndex="{Binding SelectedPhotoIndex}">
-            <ListView.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel ItemHeight="130" ItemWidth="130" HorizontalAlignment="Center" />
-                </ItemsPanelTemplate>
-            </ListView.ItemsPanel>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="VerticalContentAlignment" Value="Center" />
-                    <Setter Property="HorizontalAlignment" Value="Center" />
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Border>
-                        <Border.CacheMode>
-                            <BitmapCache RenderAtScale="1" />
-                        </Border.CacheMode>
-                        <!--<Border.InputBindings>
-                            <MouseBinding Gesture="LeftDoubleClick"
-                                          Command="{Binding Path=DataContext.Open, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}"
-                                          CommandParameter="{Binding}" />
-                        </Border.InputBindings>-->
-                        <Grid>
-                            <Rectangle Fill="Black" Opacity="0.15">
-                                <Rectangle.RenderTransform>
-                                    <TranslateTransform X="3" Y="3" />
-                                </Rectangle.RenderTransform>
-                                <Rectangle.Effect>
-                                    <BlurEffect Radius="7" RenderingBias="Performance" />
-                                </Rectangle.Effect>
-                            </Rectangle>
-                            <Image Width="120" Height="120" Source="{Binding Thumbnail}" Stretch="UniformToFill" />
-                            <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" Padding="3"
-                                    Background="#9D2F4F4F">
-                                <UniformGrid Rows="1">
-                                    <TextBlock Foreground="White" HorizontalAlignment="Center">
-                                        <!--<Run FontFamily="/Fonts/#Icons" Text="" />-->
-                                        <Run Text="{Binding Path=Exif.ShutterSpeed, Mode=OneWay}" />
-                                    </TextBlock>
-                                    <TextBlock Foreground="White" HorizontalAlignment="Center">
-                                        <!--<Run FontFamily="/Fonts/#Icons" Text="" />-->
-                                        <Run Text="{Binding Path=Exif.Aperture, Mode=OneWay}" />
-                                    </TextBlock>
-                                    <TextBlock Foreground="White" HorizontalAlignment="Center"
-                                               Text="{Binding Path=Exif.Iso}" />
-                                </UniformGrid>
-                            </Border>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <Border Margin="200" BorderThickness="1" BorderBrush="YellowGreen">
+            <tileView:TilesList TilesSource="{Binding Tiles}" />
+        </Border>
     </Grid>
 </UserControl>

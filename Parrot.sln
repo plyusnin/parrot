@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geographics", "Geographics\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapVisualization", "MapViewControl\MapVisualization.csproj", "{E4D20511-9FEB-4102-BEE2-208B124C60C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parrot.Controls.TileView", "Parrot.Controls.TileView\Parrot.Controls.TileView.csproj", "{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{E4D20511-9FEB-4102-BEE2-208B124C60C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4D20511-9FEB-4102-BEE2-208B124C60C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4D20511-9FEB-4102-BEE2-208B124C60C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

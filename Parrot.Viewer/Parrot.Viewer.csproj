@@ -196,6 +196,10 @@
       <Project>{E4D20511-9FEB-4102-BEE2-208B124C60C4}</Project>
       <Name>MapVisualization</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Parrot.Controls.TileView\Parrot.Controls.TileView.csproj">
+      <Project>{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}</Project>
+      <Name>Parrot.Controls.TileView</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
