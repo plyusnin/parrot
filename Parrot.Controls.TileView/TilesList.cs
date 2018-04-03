@@ -150,7 +150,7 @@ namespace Parrot.Controls.TileView
         {
             base.OnRenderSizeChanged(sizeInfo);
             _columns          = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
-            _rows             = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace));
+            _rows             = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace)) + 1;
             GlobalTransform.X = 0.5 * (ActualWidth - TileSpace * (_columns - 1) - TileSize.Width * _columns);
             Rearrange();
         }

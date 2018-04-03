@@ -29,27 +29,42 @@ namespace Parrot.Controls.TileView.Visuals
 
     public class PictureVisual : TileHostVisual
     {
-        private readonly Point _imageOrigin;
-        private readonly Size _imageSize;
-        private readonly ImageSource _imageSource;
+        private Point _imageOrigin;
+        private Size _imageSize;
+        private readonly BitmapImage _imageSource;
         private readonly Size _size;
 
         public PictureVisual(ImageSource ImageSource, Size Size) : base(1)
         {
-            _imageSource = ImageSource;
             _size        = Size;
 
-            var scale = Math.Max(_size.Width / ImageSource.Width, _size.Height / ImageSource.Height);
-            _imageSize = new Size(ImageSource.Width * scale, ImageSource.Height * scale);
+
+            _imageSource = (BitmapImage)ImageSource;
+            _imageSource.DownloadCompleted += BmpOnDownloadCompleted;
+        }
+
+        private void BmpOnDownloadCompleted(object Sender, EventArgs Args)
+        {
+            var scale = Math.Max(_size.Width / _imageSource.Width, _size.Height / _imageSource.Height);
+            _imageSize = new Size(_imageSource.Width * scale, _imageSource.Height * scale);
             _imageOrigin = new Point(0.5 * (_size.Width - _imageSize.Width),
                                      0.5 * (_size.Height - _imageSize.Height));
+            
+            Draw();
         }
 
         protected override void DrawElement(DrawingContext Context)
         {
-            Context.PushClip(new RectangleGeometry(new Rect(_size)));
-            Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
-            Context.Pop();
+            if (_imageSource.IsDownloading)
+            {
+                Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
+            }
+            else
+            {
+                Context.PushClip(new RectangleGeometry(new Rect(_size)));
+                Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
+                Context.Pop();
+            }
         }
     }
 
