@@ -28,9 +28,9 @@ namespace Parrot.Controls.TileView
         private readonly ReactiveList<ITileViewModel> _tileViewModels;
 
         private readonly VisualCollection _visuals;
-        private int _columns;
 
-        internal TranslateTransform _globalTransform = new TranslateTransform();
+        internal readonly TranslateTransform GlobalTransform = new TranslateTransform();
+        private int _columns;
         private int _rows;
         private int _topmostRow;
 
@@ -78,7 +78,7 @@ namespace Parrot.Controls.TileView
 
         private void ScrollChanged()
         {
-            _globalTransform.Y = -ScrollingOffset;
+            GlobalTransform.Y = -ScrollingOffset;
 
             var newTopmostRow = (int)Math.Floor(ScrollingOffset / (TileSize.Height + TileSpace));
             if (newTopmostRow != _topmostRow)
@@ -149,9 +149,9 @@ namespace Parrot.Controls.TileView
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
         {
             base.OnRenderSizeChanged(sizeInfo);
-            _columns           = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
-            _rows              = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace));
-            _globalTransform.X = 0.5 * (ActualWidth - TileSpace * (_columns - 1) - TileSize.Width * _columns);
+            _columns          = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
+            _rows             = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace));
+            GlobalTransform.X = 0.5 * (ActualWidth - TileSpace * (_columns - 1) - TileSize.Width * _columns);
             Rearrange();
         }
 
@@ -195,7 +195,7 @@ namespace Parrot.Controls.TileView
 
             var transform = new TransformGroup();
             transform.Children.Add(_gridTransform);
-            transform.Children.Add(_parent._globalTransform);
+            transform.Children.Add(_parent.GlobalTransform);
 
             PictureVisual = new PictureVisual(Image, _parent.TileSize) { Transform = transform };
             ShadowVisual  = new ShadowVisual(_parent.TileSize) { Transform         = transform };

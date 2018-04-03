@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
 
 namespace Parrot.Controls.TileView.Visuals
 {
@@ -27,10 +29,10 @@ namespace Parrot.Controls.TileView.Visuals
 
     public class PictureVisual : TileHostVisual
     {
+        private readonly Point _imageOrigin;
         private readonly Size _imageSize;
         private readonly ImageSource _imageSource;
         private readonly Size _size;
-        private readonly Point _imageOrigin;
 
         public PictureVisual(ImageSource ImageSource, Size Size) : base(1)
         {
