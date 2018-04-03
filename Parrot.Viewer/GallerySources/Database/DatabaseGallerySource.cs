@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reactive.Disposables;
 using Geographics;
 using LiteDB;
@@ -13,64 +14,66 @@ namespace Parrot.Viewer.GallerySources.Database
 {
     public class DatabaseGallerySource : IGallerySource, IDisposable
     {
-        private readonly IFileGallerySource _core;
         private readonly LiteDatabase _db;
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
         private readonly ExifManager _exifManager = new ExifManager();
         private readonly LiteCollection<DbPhotoRecord> _photos;
+
+        private readonly string _root;
         private readonly ThumbnailFactory _thumbnailFactory = new ThumbnailFactory();
 
-        public DatabaseGallerySource(IFileGallerySource Core)
+        public DatabaseGallerySource(string Root)
         {
+            _root = Root;
             _db = new LiteDatabase("gallery.db")
                 .DisposeWith(_disposeOnExit);
 
             _photos = _db.GetCollection<DbPhotoRecord>("photos");
 
-            _core  = Core;
-            Photos = _core.Photos
-                          .CreateDerivedCollection(Load)
-                          .DisposeWith(_disposeOnExit);
+            Photos = new ReactiveList<IPhotoEntity>();
+
+            Directory.EnumerateFiles(_root, "*.jpg", SearchOption.AllDirectories)
+                     .AsParallel()
+                     .Select(Load)
+                     .Where(r => r != null)
+                     .ToList()
+                     .ForEach(Photos.Add);
         }
 
-        public void Dispose()
-        {
-            _disposeOnExit.Dispose();
-        }
+        public void Dispose() { _disposeOnExit.Dispose(); }
 
-        public IReactiveDerivedList<IPhotoEntity> Photos { get; }
+        public IReactiveList<IPhotoEntity> Photos { get; }
 
-        private DatabasePhotoEntity Load(FilePhotoRecord Photo)
+        private DatabasePhotoEntity Load(string FileName)
         {
             try
             {
-                Debug.Print($"--> {Photo.FileName}");
+                Debug.Print($"--> {FileName}");
 
-                var fileName = Photo.FileName;
-                var record   = _photos.FindOne(p => p.FileName == fileName);
+                var record = _photos.FindOne(p => p.FileName == FileName);
                 if (record == null)
                 {
-                    var exif = _exifManager.Load(fileName);
-                    record   = new DbPhotoRecord
-                    {
-                        FileName     = fileName,
-                        Aperture     = exif.Aperture,
-                        Camera       = exif.Camera,
-                        Iso          = exif.Iso,
-                        ShotTime     = exif.ShotTime,
-                        ShutterSpeed = exif.ShutterSpeed,
-                        hasGps       = exif.Gps != null,
-                        Latitude     = exif.Gps?.Latitude.ToE6Int() ?? 0,
-                        Longitude    = exif.Gps?.Longitude.ToE6Int() ?? 0,
-                        Rotation     = exif.Rotation
-                    };
+                    var exif = _exifManager.Load(FileName);
+                    record = new DbPhotoRecord
+                             {
+                                 FileName = FileName,
+                                 Aperture = exif.Aperture,
+                                 Camera = exif.Camera,
+                                 Iso = exif.Iso,
+                                 ShotTime = exif.ShotTime,
+                                 ShutterSpeed = exif.ShutterSpeed,
+                                 hasGps = exif.Gps != null,
+                                 Latitude = exif.Gps?.Latitude.ToE6Int() ?? 0,
+                                 Longitude = exif.Gps?.Longitude.ToE6Int() ?? 0,
+                                 Rotation = exif.Rotation
+                             };
                     _photos.Insert(record);
                     _photos.EnsureIndex(x => x.FileName);
                 }
 
                 if (!_db.FileStorage.Exists($"$/thumbnails/{record.Id}.jpg"))
                 {
-                    var thumbnail = new MemoryStream(_thumbnailFactory.GenerateThumbnail(fileName, record.Rotation));
+                    var thumbnail = new MemoryStream(_thumbnailFactory.GenerateThumbnail(FileName, record.Rotation));
                     _db.FileStorage.Upload($"$/thumbnails/{record.Id}.jpg", $"{record.Id}.jpg",
                                            thumbnail);
                 }
@@ -82,7 +85,7 @@ namespace Parrot.Viewer.GallerySources.Database
 
                 return new DatabasePhotoEntity(_db,
                                                record.Id,
-                                               fileName,
+                                               FileName,
                                                new ExifInformation(record.Aperture,
                                                                    record.ShutterSpeed,
                                                                    record.Iso,
@@ -94,7 +97,7 @@ namespace Parrot.Viewer.GallerySources.Database
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw;
+                return null;
             }
         }
     }

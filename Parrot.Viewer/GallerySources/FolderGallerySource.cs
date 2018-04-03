@@ -21,7 +21,6 @@ namespace Parrot.Viewer.GallerySources
 
             Directory.EnumerateFiles(_root, "*.jpg", SearchOption.AllDirectories)
                      .ToObservable()
-                     //.SubscribeOn(TaskPoolScheduler.Default)
                      .Select(OpenPhoto)
                      .Subscribe(Photos.Add)
                      .DisposeWith(_disposeOnExit);
