@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
@@ -32,16 +31,20 @@ namespace Parrot.Controls.TileView
 
         internal readonly TranslateTransform GlobalTransform = new TranslateTransform();
         private int _columns;
+
+        private Bounds _loadedBounds;
         private int _rows;
+
+        private double _targetOffset;
         private int _topmostRow;
 
         public TilesList()
         {
-            Background      = Brushes.Transparent;
-            _visuals        = new VisualCollection(this);
+            Background = Brushes.Transparent;
+            _visuals = new VisualCollection(this);
             _tileViewModels = new ReactiveList<ITileViewModel>();
-            Tiles           = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack);
-            ClipToBounds = true;
+            Tiles = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack);
+            //ClipToBounds = true;
         }
 
         public double ScrollingOffset
@@ -81,24 +84,32 @@ namespace Parrot.Controls.TileView
         private void ScrollChanged()
         {
             GlobalTransform.Y = -ScrollingOffset;
+            UpdateGridContent();
+        }
 
+        private void UpdateGridContent()
+        {
             var newTopmostRow = (int)Math.Floor(ScrollingOffset / (TileSize.Height + TileSpace));
-            if (newTopmostRow != _topmostRow)
+            _topmostRow = newTopmostRow;
+
+            if (TilesSource == null)
+                return;
+
+            var newBounds = new Bounds { Min = _topmostRow * _columns, Max = (_topmostRow + _rows) * _columns };
+            if (!_loadedBounds.Equals(newBounds))
             {
-                _topmostRow = newTopmostRow;
+                _tileViewModels.RemoveAll(_tileViewModels.Where(t => t.Index < newBounds.Min || t.Index >= newBounds.Max).ToList());
 
-                var minIndex = _topmostRow * _columns;
-                var maxIndex = (_topmostRow + _rows) * _columns;
+                var maxExistingIndex = Math.Max(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Max(), newBounds.Min - 1);
+                var minExistingIndex = Math.Min(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Min(), newBounds.Max + 1);
 
-                _tileViewModels.RemoveAll(_tileViewModels.Where(t => t.Index <= minIndex || t.Index >= maxIndex).ToList());
+                if (maxExistingIndex != newBounds.Max)
+                    _tileViewModels.AddRange(TilesSource.GetTiles(maxExistingIndex + 1, newBounds.Max - maxExistingIndex - 1));
+                if (minExistingIndex != newBounds.Min)
+                    _tileViewModels.AddRange(TilesSource.GetTiles(newBounds.Min, minExistingIndex - newBounds.Min));
 
-                var maxExistingIndex = _tileViewModels.Select(t => t.Index).DefaultIfEmpty().Max();
-                var minExistingIndex = _tileViewModels.Select(t => t.Index).DefaultIfEmpty().Min();
-
-                if (maxExistingIndex != maxIndex)
-                    _tileViewModels.AddRange(TilesSource.GetTiles(maxExistingIndex + 1, maxIndex - maxExistingIndex - 1)); 
-                if (minExistingIndex != minIndex)
-                    _tileViewModels.AddRange(TilesSource.GetTiles(minIndex, minExistingIndex - minIndex));
+                _loadedBounds = newBounds;
+                Console.WriteLine($"New bounds: {_loadedBounds}");
             }
         }
 
@@ -122,7 +133,7 @@ namespace Parrot.Controls.TileView
         private TilesPack CreateTiles(ITileViewModel ViewModel)
         {
             var pack = new TilesPack(this, ViewModel.Index, ViewModel.ImageSource);
-            RefreshPosition(pack);
+            RefreshTilePosition(pack);
             foreach (var visual in pack.EnumerateVisuals()) AddVisual(visual);
             return pack;
         }
@@ -151,10 +162,11 @@ namespace Parrot.Controls.TileView
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
         {
             base.OnRenderSizeChanged(sizeInfo);
-            _columns          = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
-            _rows             = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace)) + 1;
+            _columns = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
+            _rows = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace)) + 1;
             GlobalTransform.X = 0.5 * (ActualWidth - TileSpace * (_columns - 1) - TileSize.Width * _columns);
             Rearrange();
+            UpdateGridContent();
         }
 
         private void Rearrange()
@@ -162,27 +174,38 @@ namespace Parrot.Controls.TileView
             if (Tiles == null)
                 return;
 
-            foreach (var tile in Tiles) RefreshPosition(tile);
+            foreach (var tile in Tiles) RefreshTilePosition(tile);
         }
 
-        private void RefreshPosition(TilesPack tile)
+        private void RefreshTilePosition(TilesPack tile)
         {
             tile.Position =
                 new GridPosition(tile.Index % _columns,
                                  tile.Index / _columns);
         }
 
-        private double _targetOffset;
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             _targetOffset = Math.Max(0, _targetOffset - e.Delta * 0.4);
-            BeginAnimation(ScrollingOffsetProperty,
-                           new DoubleAnimation(_targetOffset,
-                                               new Duration(TimeSpan.FromMilliseconds(300)))
-                           {
-                               EasingFunction = new PowerEase { EasingMode = EasingMode.EaseOut }
-                           });
+            //BeginAnimation(ScrollingOffsetProperty,
+            //               new DoubleAnimation(_targetOffset,
+            //                                   new Duration(TimeSpan.FromMilliseconds(300)))
+            //               {
+            //                   EasingFunction = new PowerEase { EasingMode = EasingMode.EaseOut }
+            //               });
+            ScrollingOffset = _targetOffset;
             base.OnMouseWheel(e);
+        }
+
+        private struct Bounds
+        {
+            public int Min;
+            public int Max;
+
+            public override string ToString()
+            {
+                return $"[{Min} => {Max}]";
+            }
         }
     }
 
@@ -199,27 +222,27 @@ namespace Parrot.Controls.TileView
 
         public TilesPack(TilesList Parent, int Index, ImageSource Image)
         {
-            _parent    = Parent;
+            _parent = Parent;
             this.Index = Index;
 
             var transform = new TransformGroup();
             transform.Children.Add(_gridTransform);
             transform.Children.Add(_parent.GlobalTransform);
 
-            PictureVisual = new PictureVisual(Image, _parent.TileSize) { Transform = transform };
-            ShadowVisual  = new ShadowVisual(_parent.TileSize) { Transform         = transform };
+            PictureVisual = new PictureVisual(Image, _parent.TileSize, Index) { Transform = transform };
+            ShadowVisual = new ShadowVisual(_parent.TileSize) { Transform = transform };
         }
 
         public PictureVisual PictureVisual { get; }
-        public ShadowVisual  ShadowVisual  { get; }
-        public int           Index         { get; }
+        public ShadowVisual ShadowVisual { get; }
+        public int Index { get; }
 
         public GridPosition Position
         {
             get => _position;
             set
             {
-                _position        = value;
+                _position = value;
                 _gridTransform.X = (_parent.TileSize.Width + _parent.TileSpace) * _position.X;
                 _gridTransform.Y = (_parent.TileSize.Height + _parent.TileSpace) * _position.Y;
             }

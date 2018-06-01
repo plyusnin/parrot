@@ -57,6 +57,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
 
         public IList<ITileViewModel> GetTiles(int StartIndex, int Count)
         {
+            Console.WriteLine($"Preloading: {StartIndex} => {StartIndex + Count}");
             return _gallery.All(StartIndex, Count)
                            .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, tile, _gallery.OpenThumbnail(tile)))
                            .ToList();

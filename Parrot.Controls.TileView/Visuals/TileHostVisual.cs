@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 
 namespace Parrot.Controls.TileView.Visuals
@@ -28,13 +30,15 @@ namespace Parrot.Controls.TileView.Visuals
     public class PictureVisual : TileHostVisual
     {
         private readonly BitmapImage _imageSource;
+        private readonly int _index;
         private readonly Size _size;
         private Point _imageOrigin;
         private Size _imageSize;
 
-        public PictureVisual(ImageSource ImageSource, Size Size) : base(1)
+        public PictureVisual(ImageSource ImageSource, Size Size, int Index) : base(1)
         {
             _size = Size;
+            _index = Index;
 
             _imageSource = (BitmapImage)ImageSource;
             _imageSource.DownloadCompleted += BmpOnDownloadCompleted;
@@ -62,6 +66,9 @@ namespace Parrot.Controls.TileView.Visuals
                 Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
                 Context.Pop();
             }
+            Context.DrawText(new FormattedText((_index + 1).ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                                  new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 30, Brushes.Coral),
+                                  new Point(5, 5));
         }
     }
 
@@ -72,8 +79,8 @@ namespace Parrot.Controls.TileView.Visuals
         public ShadowVisual(Size Size) : base(-1)
         {
             _size = Size;
-            //Effect    = new BlurEffect { Radius = 22 };
-            //CacheMode = new BitmapCache();
+            Effect    = new BlurEffect { Radius = 22 };
+            CacheMode = new BitmapCache();
         }
 
         protected override void DrawElement(DrawingContext Context)

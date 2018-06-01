@@ -9,7 +9,7 @@
              mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
-        <Border Margin="00" BorderThickness="1" BorderBrush="YellowGreen">
+        <Border Margin="200" BorderThickness="1" BorderBrush="YellowGreen">
             <tileView:TilesList TilesSource="{Binding Tiles}" />
         </Border>
         <!--<tileView:TilesList TilesSource="{Binding Tiles}" />-->
