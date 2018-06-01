@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -29,19 +31,35 @@ namespace Parrot.Controls.TileView.Visuals
 
     public class PictureVisual : TileHostVisual
     {
-        private readonly BitmapImage _imageSource;
+        private BitmapImage _imageSource;
         private readonly int _index;
         private readonly Size _size;
         private Point _imageOrigin;
         private Size _imageSize;
+        private bool _ready;
 
-        public PictureVisual(ImageSource ImageSource, Size Size, int Index) : base(1)
+        public PictureVisual(Stream ThumbnailStream, Size Size, int Index) : base(1)
         {
             _size = Size;
             _index = Index;
             CacheMode = new BitmapCache();
 
-            //_imageSource = (BitmapImage)ImageSource;
+            Task.Run(() =>
+                     {
+                         _imageSource = new BitmapImage();
+                         _imageSource.BeginInit();
+                         _imageSource.CacheOption = BitmapCacheOption.OnLoad;
+                         _imageSource.DownloadCompleted += BmpOnDownloadCompleted;
+                         _imageSource.DownloadCompleted += (s, e) =>
+                                                           {
+                                                               ThumbnailStream.Dispose();
+                                                           };
+                         _imageSource.StreamSource = ThumbnailStream;
+                         _imageSource.EndInit();
+                         //_imageSource.Freeze();
+                     });
+
+            //_imageSource = (BitmapFrame)ThumbnailStream;
             //_imageSource.DownloadCompleted += BmpOnDownloadCompleted;
         }
 
@@ -51,23 +69,23 @@ namespace Parrot.Controls.TileView.Visuals
             _imageSize = new Size(_imageSource.Width * scale, _imageSource.Height * scale);
             _imageOrigin = new Point(0.5 * (_size.Width - _imageSize.Width),
                                      0.5 * (_size.Height - _imageSize.Height));
-
+            _ready = true;
             Draw();
         }
 
         protected override void DrawElement(DrawingContext Context)
         {
-            //if (_imageSource.IsDownloading)
-            //{
-            //    Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
-            //}
-            //else
-            //{
-            //    Context.PushClip(new RectangleGeometry(new Rect(_size)));
-            //    Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
-            //    Context.Pop();
-            //}
-            Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
+            if (!_ready)
+            {
+                Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
+            }
+            else
+            {
+                Context.PushClip(new RectangleGeometry(new Rect(_size)));
+                Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
+                Context.Pop();
+            }
+            //Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
             Context.DrawText(new FormattedText((_index + 1).ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                                   new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 30, Brushes.Coral),
                                   new Point(5, 5));

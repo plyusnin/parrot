@@ -1,10 +1,10 @@
-﻿using System.Windows.Media;
+﻿using System.IO;
 
 namespace Parrot.Controls.TileView
 {
     public interface ITileViewModel
     {
         int Index { get; }
-        ImageSource ImageSource { get; }
+        Stream ThumbnailStream { get; }
     }
 }

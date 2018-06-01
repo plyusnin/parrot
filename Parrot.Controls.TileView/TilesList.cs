@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -8,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
@@ -152,7 +155,7 @@ namespace Parrot.Controls.TileView
 
         private TilesPack CreateTiles(ITileViewModel ViewModel)
         {
-            var pack = new TilesPack(this, ViewModel.Index, ViewModel.ImageSource);
+            var pack = new TilesPack(this, ViewModel.Index, ViewModel.ThumbnailStream);
             RefreshTilePosition(pack);
             foreach (var visual in pack.EnumerateVisuals()) AddVisual(visual);
             return pack;
@@ -234,7 +237,7 @@ namespace Parrot.Controls.TileView
         private readonly TilesList _parent;
         private GridPosition _position;
 
-        public TilesPack(TilesList Parent, int Index, ImageSource Image)
+        public TilesPack(TilesList Parent, int Index, Stream ThumbnailStream)
         {
             _parent = Parent;
             this.Index = Index;
@@ -243,7 +246,7 @@ namespace Parrot.Controls.TileView
             transform.Children.Add(_gridTransform);
             transform.Children.Add(_parent.GlobalTransform);
 
-            PictureVisual = new PictureVisual(Image, _parent.TileSize, Index) { Transform = transform };
+            PictureVisual = new PictureVisual(ThumbnailStream, _parent.TileSize, Index) { Transform = transform };
             ShadowVisual = new ShadowVisual(_parent.TileSize) { Transform = transform };
         }
 
