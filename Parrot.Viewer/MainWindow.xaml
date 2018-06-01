@@ -11,7 +11,7 @@
         mc:Ignorable="d" Title="Parrot Gallery"
         SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display"
         d:DataContext="{d:DesignInstance viewModels:MainViewModel}"
-        Background="DarkSlateGray" Name="Root" Width="1000">
+        Background="DarkSlateGray" Name="Root" Width="800">
     <Window.Resources>
         <ControlTemplate x:Key="TabTemplate" TargetType="TabItem">
             <Border Name="Panel" Padding="26, 4" TextBlock.Foreground="White">

@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Parrot.Controls.TileView;
 using Parrot.Viewer.GallerySources;
+using Parrot.Viewer.GallerySources.Exif;
 using ReactiveUI;
 
 namespace Parrot.Viewer.ViewModels.Tiles
@@ -58,8 +59,11 @@ namespace Parrot.Viewer.ViewModels.Tiles
         public IList<ITileViewModel> GetTiles(int StartIndex, int Count)
         {
             Console.WriteLine($"Preloading: {StartIndex} => {StartIndex + Count}");
-            return _gallery.All(StartIndex, Count)
+            var xxx = _gallery.All(StartIndex, Count)
                            .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, tile, _gallery.OpenThumbnail(tile)))
+                           .ToList();
+            return Enumerable.Range(StartIndex, Count)
+                           .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, new PhotoEntity("sasdf", null), null))
                            .ToList();
         }
 
@@ -75,10 +79,10 @@ namespace Parrot.Viewer.ViewModels.Tiles
 
                 var image = new BitmapImage();
 
-                image.BeginInit();
-                image.DownloadCompleted += (s, e) => ThumbnailStream.Dispose();
-                image.StreamSource = ThumbnailStream;
-                image.EndInit();
+                //image.BeginInit();
+                //image.DownloadCompleted += (s, e) => ThumbnailStream.Dispose();
+                //image.StreamSource = ThumbnailStream;
+                //image.EndInit();
 
                 _imageSource = image;
             }

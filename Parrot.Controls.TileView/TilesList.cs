@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
@@ -32,10 +35,12 @@ namespace Parrot.Controls.TileView
         internal readonly TranslateTransform GlobalTransform = new TranslateTransform();
         private int _columns;
 
+        private double _lastTargetOffset;
+
         private Bounds _loadedBounds;
         private int _rows;
+        private readonly Subject<double> _targetOffset = new Subject<double>();
 
-        private double _targetOffset;
         private int _topmostRow;
 
         public TilesList()
@@ -44,7 +49,11 @@ namespace Parrot.Controls.TileView
             _visuals = new VisualCollection(this);
             _tileViewModels = new ReactiveList<ITileViewModel>();
             Tiles = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack);
-            //ClipToBounds = true;
+            ClipToBounds = true;
+
+            _targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
+                         .ObserveOnDispatcher()
+                         .Subscribe(ScrollTo);
         }
 
         public double ScrollingOffset
@@ -75,6 +84,17 @@ namespace Parrot.Controls.TileView
 
         private IReactiveDerivedList<TilesPack> Tiles { get; }
 
+        private void ScrollTo(double Offset)
+        {
+            var duration = TimeSpan.FromMilliseconds(1.5 * Math.Abs(Offset - (double)GetValue(ScrollingOffsetProperty)));
+            BeginAnimation(ScrollingOffsetProperty,
+                           new DoubleAnimation(Offset,
+                                               new Duration(duration))
+                           {
+                               EasingFunction = new PowerEase { EasingMode = EasingMode.EaseOut, Power = 3.0 }
+                           });
+        }
+
         private static void OnScrollingOffsetChanged(DependencyObject O, DependencyPropertyChangedEventArgs PropertyChangedEventArgs)
         {
             var c = (TilesList)O;
@@ -103,9 +123,9 @@ namespace Parrot.Controls.TileView
                 var maxExistingIndex = Math.Max(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Max(), newBounds.Min - 1);
                 var minExistingIndex = Math.Min(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Min(), newBounds.Max + 1);
 
-                if (maxExistingIndex != newBounds.Max)
+                if (maxExistingIndex < newBounds.Max)
                     _tileViewModels.AddRange(TilesSource.GetTiles(maxExistingIndex + 1, newBounds.Max - maxExistingIndex - 1));
-                if (minExistingIndex != newBounds.Min)
+                if (minExistingIndex > newBounds.Min)
                     _tileViewModels.AddRange(TilesSource.GetTiles(newBounds.Min, minExistingIndex - newBounds.Min));
 
                 _loadedBounds = newBounds;
@@ -186,14 +206,8 @@ namespace Parrot.Controls.TileView
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
-            _targetOffset = Math.Max(0, _targetOffset - e.Delta * 0.4);
-            //BeginAnimation(ScrollingOffsetProperty,
-            //               new DoubleAnimation(_targetOffset,
-            //                                   new Duration(TimeSpan.FromMilliseconds(300)))
-            //               {
-            //                   EasingFunction = new PowerEase { EasingMode = EasingMode.EaseOut }
-            //               });
-            ScrollingOffset = _targetOffset;
+            _targetOffset.OnNext(_lastTargetOffset = Math.Max(0, _lastTargetOffset - e.Delta * 0.4));
+            //ScrollingOffset = _targetOffset;
             base.OnMouseWheel(e);
         }
 
@@ -251,7 +265,7 @@ namespace Parrot.Controls.TileView
         public IEnumerable<TileHostVisual> EnumerateVisuals()
         {
             yield return PictureVisual;
-            yield return ShadowVisual;
+            //yield return ShadowVisual;
         }
     }
 

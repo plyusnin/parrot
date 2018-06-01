@@ -39,9 +39,10 @@ namespace Parrot.Controls.TileView.Visuals
         {
             _size = Size;
             _index = Index;
+            CacheMode = new BitmapCache();
 
-            _imageSource = (BitmapImage)ImageSource;
-            _imageSource.DownloadCompleted += BmpOnDownloadCompleted;
+            //_imageSource = (BitmapImage)ImageSource;
+            //_imageSource.DownloadCompleted += BmpOnDownloadCompleted;
         }
 
         private void BmpOnDownloadCompleted(object Sender, EventArgs Args)
@@ -56,16 +57,17 @@ namespace Parrot.Controls.TileView.Visuals
 
         protected override void DrawElement(DrawingContext Context)
         {
-            if (_imageSource.IsDownloading)
-            {
-                Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
-            }
-            else
-            {
-                Context.PushClip(new RectangleGeometry(new Rect(_size)));
-                Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
-                Context.Pop();
-            }
+            //if (_imageSource.IsDownloading)
+            //{
+            //    Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
+            //}
+            //else
+            //{
+            //    Context.PushClip(new RectangleGeometry(new Rect(_size)));
+            //    Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
+            //    Context.Pop();
+            //}
+            Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
             Context.DrawText(new FormattedText((_index + 1).ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                                   new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 30, Brushes.Coral),
                                   new Point(5, 5));
