@@ -31,7 +31,7 @@ namespace Parrot.Viewer.ViewModels.Map
         {
             var thumbnail = new BitmapImage();
             thumbnail.BeginInit();
-            thumbnail.StreamSource = _photo.OpenThumbnail();
+            //thumbnail.StreamSource = _photo.OpenThumbnail();
             thumbnail.CacheOption  = BitmapCacheOption.OnDemand;
             thumbnail.EndInit();
             return thumbnail;

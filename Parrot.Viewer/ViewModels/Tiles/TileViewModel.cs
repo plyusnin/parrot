@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Windows.Media.Imaging;
-using Parrot.Controls.TileView;
 using Parrot.Viewer.GallerySources.Exif;
 
 namespace Parrot.Viewer.ViewModels.Tiles

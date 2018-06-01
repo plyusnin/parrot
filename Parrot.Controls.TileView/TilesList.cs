@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
@@ -40,6 +41,7 @@ namespace Parrot.Controls.TileView
             _visuals        = new VisualCollection(this);
             _tileViewModels = new ReactiveList<ITileViewModel>();
             Tiles           = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack);
+            ClipToBounds = true;
         }
 
         public double ScrollingOffset
@@ -94,7 +96,7 @@ namespace Parrot.Controls.TileView
                 var minExistingIndex = _tileViewModels.Select(t => t.Index).DefaultIfEmpty().Min();
 
                 if (maxExistingIndex != maxIndex)
-                    _tileViewModels.AddRange(TilesSource.GetTiles(maxExistingIndex + 1, maxIndex - maxExistingIndex - 1));
+                    _tileViewModels.AddRange(TilesSource.GetTiles(maxExistingIndex + 1, maxIndex - maxExistingIndex - 1)); 
                 if (minExistingIndex != minIndex)
                     _tileViewModels.AddRange(TilesSource.GetTiles(minIndex, minExistingIndex - minIndex));
             }
@@ -170,9 +172,16 @@ namespace Parrot.Controls.TileView
                                  tile.Index / _columns);
         }
 
+        private double _targetOffset;
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
-            ScrollingOffset = Math.Max(0, ScrollingOffset - e.Delta * 0.2);
+            _targetOffset = Math.Max(0, _targetOffset - e.Delta * 0.4);
+            BeginAnimation(ScrollingOffsetProperty,
+                           new DoubleAnimation(_targetOffset,
+                                               new Duration(TimeSpan.FromMilliseconds(300)))
+                           {
+                               EasingFunction = new PowerEase { EasingMode = EasingMode.EaseOut }
+                           });
             base.OnMouseWheel(e);
         }
     }

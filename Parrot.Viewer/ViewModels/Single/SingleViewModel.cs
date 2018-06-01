@@ -12,6 +12,7 @@ namespace Parrot.Viewer.ViewModels.Single
 {
     public class SingleViewModel : ReactiveObject, IDisposable
     {
+        private readonly IGallery _gallery;
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
 
         private readonly ObservableAsPropertyHelper<ImageSource> _picture;
@@ -19,33 +20,35 @@ namespace Parrot.Viewer.ViewModels.Single
 
         private int _index;
 
-        public SingleViewModel(IAlbum Album, int InputIndex)
+        public SingleViewModel(IGallery Gallery)
         {
-            Index = InputIndex;
+            //_gallery = Gallery;
+            //Index = InputIndex;
 
-            this.WhenAnyValue(x => x.Index)
-                .Select(i => Album.Photos[i])
-                .SelectMany(f => Observable.Start(() => CreateImageSource(f))
-                                           .StartWith((ImageSource)null))
-                .ObserveOnDispatcher()
-                .ToProperty(this, x => x.Picture, out _picture)
-                .DisposeWith(_disposeOnExit);
+            //this.WhenAnyValue(x => x.Index)
+            //    .Select(i => Album.Photos[i])
+            //    .SelectMany(f => Observable.Start(() => CreateImageSource(f))
+            //                               .StartWith((ImageSource)null))
+            //    .ObserveOnDispatcher()
+            //    .ToProperty(this, x => x.Picture, out _picture)
+            //    .DisposeWith(_disposeOnExit);
 
-            this.WhenAnyValue(x => x.Index)
-                .Select(i => Album.Photos[i])
-                .Select(CreatePreviewImageSource)
-                .ToProperty(this, x => x.PicturePreview, out _picturePreview)
-                .DisposeWith(_disposeOnExit);
 
-            Next = ReactiveCommand.Create(() => Index += 1, this.WhenAnyValue(x => x.Index).Select(i => i < Album.Photos.Count - 1));
-            Previous = ReactiveCommand.Create(() => Index -= 1, this.WhenAnyValue(x => x.Index).Select(i => i > 0));
+            //this.WhenAnyValue(x => x.Index)
+            //    .Select(i => Album.Photos[i])
+            //    .Select(CreatePreviewImageSource)
+            //    .ToProperty(this, x => x.PicturePreview, out _picturePreview)
+            //    .DisposeWith(_disposeOnExit);
+
+            //Next = ReactiveCommand.Create(() => Index += 1, this.WhenAnyValue(x => x.Index).Select(i => i < Album.Photos.Count - 1));
+            //Previous = ReactiveCommand.Create(() => Index -= 1, this.WhenAnyValue(x => x.Index).Select(i => i > 0));
         }
 
         public ReactiveCommand<Unit, int> Next { get; }
         public ReactiveCommand<Unit, int> Previous { get; }
 
-        public ImageSource Picture => _picture.Value;
-        public ImageSource PicturePreview => _picturePreview.Value;
+        //public ImageSource Picture => _picture.Value;
+        //public ImageSource PicturePreview => _picturePreview.Value;
 
         public int Index
         {
@@ -59,7 +62,7 @@ namespace Parrot.Viewer.ViewModels.Single
         {
             var bitmapimage = new BitmapImage();
             bitmapimage.BeginInit();
-            bitmapimage.StreamSource = Photo.OpenThumbnail();
+            //bitmapimage.StreamSource = Photo.OpenThumbnail();
             bitmapimage.CacheOption = BitmapCacheOption.OnDemand;
             bitmapimage.EndInit();
             return bitmapimage;

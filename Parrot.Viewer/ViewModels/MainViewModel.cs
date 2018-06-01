@@ -20,24 +20,25 @@ namespace Parrot.Viewer.ViewModels
         {
             var directory = App.Arguments[0];
 
-            IGallerySource source =
-                new DatabaseGallerySource(directory);
+            IGallery gallery = new DatabaseGallery();
+            FolderGalleryManager manager = new FolderGalleryManager(gallery, directory);
 
-            Gallery = new GalleryViewModel(source) { Directory = directory };
+            Gallery = new GalleryViewModel(gallery) { Directory = directory };
+            Single = new SingleViewModel(gallery);
 
-            Gallery.WhenAnyValue(x => x.Album)
-                   .Select(a => new SingleViewModel(a, 0))
-                   .ToProperty(this, x => x.Single, out _single);
+            //Gallery.WhenAnyValue(x => x.Album)
+            //       .Select(a => new SingleViewModel(a, 0))
+            //       .ToProperty(this, x => x.Single, out _single);
 
             Gallery.WhenAnyValue(x => x.SelectedPhotoIndex)
                    .Subscribe(i => Single.Index = i);
 
-            Map = new MapViewModel(source);
+            //Map = new MapViewModel(source);
 
             SwitchFullScreen = ReactiveCommand.Create(() => FullScreenMode = !FullScreenMode);
         }
 
-        public SingleViewModel Single => _single.Value;
+        public SingleViewModel Single { get; }
         public MapViewModel    Map    { get; }
 
         public ReactiveCommand<Unit, bool> SwitchFullScreen { get; }

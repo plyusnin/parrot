@@ -76,6 +76,9 @@
     <Reference Include="System.Reactive.Windows.Threading, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Rx-XAML.2.2.5\lib\net45\System.Reactive.Windows.Threading.dll</HintPath>
     </Reference>
+    <Reference Include="System.ValueTuple, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Interactivity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Windows.Interactivity.WPF.2.0.20525\lib\net40\System.Windows.Interactivity.dll</HintPath>
     </Reference>
@@ -99,10 +102,12 @@
     </ApplicationDefinition>
     <Compile Include="Albums\FolderAlbum.cs" />
     <Compile Include="Albums\IAlbum.cs" />
-    <Compile Include="GallerySources\Database\DatabaseGallerySource.cs" />
+    <Compile Include="GallerySources\Database\DatabaseGallery.cs" />
     <Compile Include="GallerySources\Database\Entities\DbPhotoRecord.cs" />
-    <Compile Include="GallerySources\Database\PhotoEntity.cs" />
     <Compile Include="GallerySources\Exif\ExifReaderHelper.cs" />
+    <Compile Include="GallerySources\IGallery.cs" />
+    <Compile Include="GallerySources\IPhotoEntity.cs" />
+    <Compile Include="GallerySources\PhotoEntity.cs" />
     <Compile Include="GallerySources\Thumbnails\ThumbnailFactory.cs" />
     <Compile Include="GallerySources\Exif\ExifManager.cs" />
     <Compile Include="GallerySources\IFileGallerySource.cs" />
@@ -113,6 +118,7 @@
     <Compile Include="ViewModels\Map\MapViewModel.cs" />
     <Compile Include="ViewModels\Map\PhotoMapElement.cs" />
     <Compile Include="ViewModels\Single\SingleViewModel.cs" />
+    <Compile Include="ViewModels\Tiles\FolderGalleryManager.cs" />
     <Compile Include="ViewModels\Tiles\GalleryViewModel.cs" />
     <Compile Include="GallerySources\IGallerySource.cs" />
     <Compile Include="ViewModels\Tiles\TileViewModel.cs" />
@@ -200,6 +206,9 @@
       <Project>{1A40404D-6A72-40DA-BEF0-E8D81E1EDED3}</Project>
       <Name>Parrot.Controls.TileView</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="GallerySources\GalleryManagers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
