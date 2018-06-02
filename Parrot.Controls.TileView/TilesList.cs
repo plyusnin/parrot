@@ -54,9 +54,11 @@ namespace Parrot.Controls.TileView
             Tiles = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack);
             ClipToBounds = true;
 
-            _targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
-                         .ObserveOnDispatcher()
-                         .Subscribe(ScrollTo);
+            //_targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
+            //             .ObserveOnDispatcher()
+            //             .Subscribe(ScrollTo);
+            _targetOffset.ObserveOnDispatcher()
+                         .Subscribe(offset => ScrollingOffset = offset);
         }
 
         public double ScrollingOffset
@@ -185,11 +187,28 @@ namespace Parrot.Controls.TileView
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
         {
             base.OnRenderSizeChanged(sizeInfo);
-            _columns = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
-            _rows = (int)Math.Ceiling((ActualHeight + TileSpace) / (TileSize.Height + TileSpace)) + 1;
+            var rowHeight = TileSize.Height + TileSpace;
+
+            var newColumns = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
+            var newRows = (int)Math.Ceiling((ActualHeight + TileSpace) / rowHeight) + 1;
+
+            if (newRows != _rows || newColumns != _columns)
+            {
+                var centerPhotoIndex = (int)Math.Round(_topmostRow * _columns + 0.5 * _rows * _columns + 0.5 * _columns);
+                var offsetFromTheTopmostRow = ScrollingOffset - rowHeight * _topmostRow;
+
+                _columns = newColumns;
+                _rows = newRows;
+
+                ScrollingOffset = Math.Max(Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow, 0);
+                _lastTargetOffset = ScrollingOffset;
+                _targetOffset.OnNext(ScrollingOffset);
+
+                Rearrange();
+                UpdateGridContent();
+            }
+
             GlobalTransform.X = 0.5 * (ActualWidth - TileSpace * (_columns - 1) - TileSize.Width * _columns);
-            Rearrange();
-            UpdateGridContent();
         }
 
         private void Rearrange()
