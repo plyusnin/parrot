@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -11,10 +10,7 @@ namespace Parrot.Controls.TileView.Visuals
 {
     public abstract class TileHostVisual : DrawingVisual
     {
-        protected TileHostVisual(int ZIndex)
-        {
-            this.ZIndex = ZIndex;
-        }
+        protected TileHostVisual(int ZIndex) { this.ZIndex = ZIndex; }
 
         public int ZIndex { get; }
 
@@ -31,11 +27,11 @@ namespace Parrot.Controls.TileView.Visuals
 
     public class PictureVisual : TileHostVisual
     {
-        private BitmapImage _imageSource;
         private readonly int _index;
         private readonly Size _size;
         private Point _imageOrigin;
         private Size _imageSize;
+        private readonly BitmapImage _imageSource;
         private bool _ready;
 
         public PictureVisual(Stream ThumbnailStream, Size Size, int Index) : base(1)
@@ -44,20 +40,13 @@ namespace Parrot.Controls.TileView.Visuals
             _index = Index;
             CacheMode = new BitmapCache();
 
-            Task.Run(() =>
-                     {
-                         _imageSource = new BitmapImage();
-                         _imageSource.BeginInit();
-                         _imageSource.CacheOption = BitmapCacheOption.OnLoad;
-                         _imageSource.DownloadCompleted += BmpOnDownloadCompleted;
-                         _imageSource.DownloadCompleted += (s, e) =>
-                                                           {
-                                                               ThumbnailStream.Dispose();
-                                                           };
-                         _imageSource.StreamSource = ThumbnailStream;
-                         _imageSource.EndInit();
-                         //_imageSource.Freeze();
-                     });
+            _imageSource = new BitmapImage();
+            _imageSource.BeginInit();
+            _imageSource.CacheOption = BitmapCacheOption.OnLoad;
+            _imageSource.DownloadCompleted += BmpOnDownloadCompleted;
+            _imageSource.DownloadCompleted += (s, e) => { ThumbnailStream.Dispose(); };
+            _imageSource.StreamSource = ThumbnailStream;
+            _imageSource.EndInit();
 
             //_imageSource = (BitmapFrame)ThumbnailStream;
             //_imageSource.DownloadCompleted += BmpOnDownloadCompleted;
@@ -87,8 +76,8 @@ namespace Parrot.Controls.TileView.Visuals
             }
             //Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
             Context.DrawText(new FormattedText((_index + 1).ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                                  new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 30, Brushes.Coral),
-                                  new Point(5, 5));
+                                               new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 30, Brushes.Coral),
+                             new Point(5, 5));
         }
     }
 
@@ -99,7 +88,7 @@ namespace Parrot.Controls.TileView.Visuals
         public ShadowVisual(Size Size) : base(-1)
         {
             _size = Size;
-            Effect    = new BlurEffect { Radius = 22 };
+            Effect = new BlurEffect { Radius = 22 };
             CacheMode = new BitmapCache();
         }
 
