@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -13,6 +14,7 @@ namespace Parrot.Controls.TileView.Visuals
         protected TileHostVisual(int ZIndex) { this.ZIndex = ZIndex; }
 
         public int ZIndex { get; }
+        public abstract Task WhenReady { get; }
 
         protected abstract void DrawElement(DrawingContext Context);
 
@@ -32,13 +34,14 @@ namespace Parrot.Controls.TileView.Visuals
         private Point _imageOrigin;
         private Size _imageSize;
         private readonly BitmapImage _imageSource;
-        private bool _ready;
+        private TaskCompletionSource<int> _ready;
 
         public PictureVisual(Stream ThumbnailStream, Size Size, int Index) : base(1)
         {
             _size = Size;
             _index = Index;
             CacheMode = new BitmapCache();
+            _ready = new TaskCompletionSource<int>();
 
             _imageSource = new BitmapImage();
             _imageSource.BeginInit();
@@ -58,22 +61,24 @@ namespace Parrot.Controls.TileView.Visuals
             _imageSize = new Size(_imageSource.Width * scale, _imageSource.Height * scale);
             _imageOrigin = new Point(0.5 * (_size.Width - _imageSize.Width),
                                      0.5 * (_size.Height - _imageSize.Height));
-            _ready = true;
+            _ready.SetResult(1);
             Draw();
         }
 
+        public override Task WhenReady => _ready.Task;
+
         protected override void DrawElement(DrawingContext Context)
         {
-            if (!_ready)
-            {
-                Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
-            }
-            else
-            {
+            //if (!_ready)
+            //{
+            //    Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
+            //}
+            //else
+            //{
                 Context.PushClip(new RectangleGeometry(new Rect(_size)));
                 Context.DrawImage(_imageSource, new Rect(_imageOrigin, _imageSize));
                 Context.Pop();
-            }
+            //}
             //Context.DrawRectangle(Brushes.BurlyWood, null, new Rect(_size));
             Context.DrawText(new FormattedText((_index + 1).ToString(), CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                                                new Typeface(new FontFamily(), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 30, Brushes.Coral),
@@ -91,6 +96,8 @@ namespace Parrot.Controls.TileView.Visuals
             Effect = new BlurEffect { Radius = 22 };
             CacheMode = new BitmapCache();
         }
+
+        public override Task WhenReady => Task.CompletedTask;
 
         protected override void DrawElement(DrawingContext Context)
         {

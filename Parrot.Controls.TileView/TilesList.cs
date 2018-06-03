@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -51,7 +53,7 @@ namespace Parrot.Controls.TileView
             Background = Brushes.Transparent;
             _visuals = new VisualCollection(this);
             _tileViewModels = new ReactiveList<ITileViewModel>();
-            Tiles = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack);
+            Tiles = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack, scheduler: DispatcherScheduler.Current);
             ClipToBounds = true;
 
             //_targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
@@ -112,7 +114,7 @@ namespace Parrot.Controls.TileView
             UpdateGridContent();
         }
 
-        private void UpdateGridContent()
+        private async Task UpdateGridContent()
         {
             var newTopmostRow = (int)Math.Floor(ScrollingOffset / (TileSize.Height + TileSpace));
             _topmostRow = newTopmostRow;
@@ -128,10 +130,17 @@ namespace Parrot.Controls.TileView
                 var maxExistingIndex = Math.Max(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Max(), newBounds.Min - 1);
                 var minExistingIndex = Math.Min(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Min(), newBounds.Max + 1);
 
-                if (maxExistingIndex < newBounds.Max)
-                    _tileViewModels.AddRange(TilesSource.GetTiles(maxExistingIndex + 1, newBounds.Max - maxExistingIndex - 1));
-                if (minExistingIndex > newBounds.Min)
-                    _tileViewModels.AddRange(TilesSource.GetTiles(newBounds.Min, minExistingIndex - newBounds.Min));
+                var tilesSource = TilesSource;
+                var tilesToAdd = await Task.Run(() =>
+                                                {
+                                                    var newTiles = new List<ITileViewModel>();
+                                                    if (maxExistingIndex < newBounds.Max)
+                                                        newTiles.AddRange(tilesSource.GetTiles(maxExistingIndex + 1, newBounds.Max - maxExistingIndex - 1));
+                                                    if (minExistingIndex > newBounds.Min)
+                                                        newTiles.AddRange(tilesSource.GetTiles(newBounds.Min, minExistingIndex - newBounds.Min));
+                                                    return newTiles;
+                                                });
+                _tileViewModels.AddRange(tilesToAdd);
 
                 _loadedBounds = newBounds;
                 Console.WriteLine($"New bounds: {_loadedBounds}");
@@ -159,7 +168,8 @@ namespace Parrot.Controls.TileView
         {
             var pack = new TilesPack(this, ViewModel.Index, ViewModel.ThumbnailStream);
             RefreshTilePosition(pack);
-            foreach (var visual in pack.EnumerateVisuals()) AddVisual(visual);
+            foreach (var visual in pack.EnumerateVisuals())
+                visual.WhenReady.ContinueWith(t => Dispatcher.BeginInvoke((Action<TileHostVisual>)AddVisual, visual));
             return pack;
         }
 
