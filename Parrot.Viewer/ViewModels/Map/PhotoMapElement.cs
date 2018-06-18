@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -13,15 +14,15 @@ namespace Parrot.Viewer.ViewModels.Map
     public class PhotoMapElement : MapPointElement
     {
         private static readonly Typeface _typeface = new Typeface("Tahoma");
-        private readonly IPhotoEntity _photo;
         private readonly int _photosCount;
+        private readonly Stream _thumbnailStream;
         private readonly double _previewSize = 50;
         private readonly Lazy<ImageSource> _thumbnail;
 
-        public PhotoMapElement(EarthPoint Position, IPhotoEntity Photo, int PhotosCount) : base(Position)
+        public PhotoMapElement(EarthPoint Position, int PhotosCount, Stream ThumbnailStream) : base(Position)
         {
-            _photo       = Photo;
             _photosCount = PhotosCount;
+            _thumbnailStream = ThumbnailStream;
             _thumbnail   = new Lazy<ImageSource>(LoadThumbnail);
         }
 
@@ -31,7 +32,7 @@ namespace Parrot.Viewer.ViewModels.Map
         {
             var thumbnail = new BitmapImage();
             thumbnail.BeginInit();
-            //thumbnail.StreamSource = _photo.OpenThumbnail();
+            thumbnail.StreamSource = _thumbnailStream;
             thumbnail.CacheOption  = BitmapCacheOption.OnDemand;
             thumbnail.EndInit();
             return thumbnail;

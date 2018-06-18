@@ -103,9 +103,11 @@
     <Compile Include="Albums\FolderAlbum.cs" />
     <Compile Include="Albums\IAlbum.cs" />
     <Compile Include="GallerySources\Database\DatabaseGallery.cs" />
+    <Compile Include="GallerySources\Database\Entities\DbGeotag.cs" />
     <Compile Include="GallerySources\Database\Entities\DbPhotoRecord.cs" />
     <Compile Include="GallerySources\Exif\ExifReaderHelper.cs" />
     <Compile Include="GallerySources\IGallery.cs" />
+    <Compile Include="GallerySources\IGeoIndexer.cs" />
     <Compile Include="GallerySources\IPhotoEntity.cs" />
     <Compile Include="GallerySources\PhotoEntity.cs" />
     <Compile Include="GallerySources\Thumbnails\ThumbnailFactory.cs" />

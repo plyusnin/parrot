@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using Geographics;
-using MapVisualization;
 using MapVisualization.Elements;
 using MapVisualization.TileLoaders;
 using MapVisualization.TileLoaders.TilePathProvider;
@@ -14,27 +13,40 @@ namespace Parrot.Viewer.ViewModels.Map
 {
     public class MapViewModel : ReactiveObject
     {
-        private readonly IGallerySource _gallery;
+        private readonly IGallery _gallery;
+        private readonly IGeoIndexer _geoIndexer;
+        private readonly ReactiveList<GeoStack> _visibleStacks;
+
+        private EarthArea _visibleArea;
         private int _zoomLevel = 14;
 
-        public MapViewModel(IGallerySource Gallery)
+        public MapViewModel(IGallery Gallery, IGeoIndexer GeoIndexer)
         {
-            _gallery   = Gallery;
+            _gallery = Gallery;
+            _geoIndexer = GeoIndexer;
             TileLoader = new WebTileLoader(OsmTilePathProviders.Retina);
 
-            MapElements = new ReactiveList<MapElement>();
-            this.WhenAnyValue(x => x.ZoomLevel)
-                .Select(StackPhotos)
-                .Subscribe(el =>
-                           {
-                               MapElements.Clear();
-                               MapElements.AddRange(el);
-                           });
+            _visibleStacks = new ReactiveList<GeoStack>();
+            MapElements = _visibleStacks.CreateDerivedCollection(CreateMapElement);
+            this.WhenAnyValue(x => x.ZoomLevel,
+                              x => x.VisibleArea,
+                              (zoom, area) => new { zoom = zoom + 1, area })
+                .Select(x => new
+                {
+                    x.zoom,
+                    x1 = _geoIndexer.GetX(x.area.MostWesternLongitude, x.zoom),
+                    x2 = _geoIndexer.GetX(x.area.MostEasternLongitude, x.zoom),
+                    y1 = _geoIndexer.GetY(x.area.MostNorthenLatitude, x.zoom),
+                    y2 = _geoIndexer.GetY(x.area.MostSouthernLatitude, x.zoom)
+                })
+                .DistinctUntilChanged()
+                .Select(r => _gallery.GetPhotosOnMap(r.zoom, r.x1, r.x2, r.y1, r.y2))
+                .Subscribe(SynchronizeMapElements);
         }
 
         public ITileLoader TileLoader { get; }
 
-        public ReactiveList<MapElement> MapElements { get; }
+        public IReactiveDerivedList<MapElement> MapElements { get; }
 
         public int ZoomLevel
         {
@@ -42,24 +54,33 @@ namespace Parrot.Viewer.ViewModels.Map
             set => this.RaiseAndSetIfChanged(ref _zoomLevel, value);
         }
 
-        private IList<MapElement> StackPhotos(int Zoom)
+        public EarthArea VisibleArea
         {
-            if (Zoom == 0)
-                return new List<MapElement>();
-
-            return _gallery.Photos
-                           .Where(f => f.Exif.Gps != null)
-                           .GroupBy(f => Tuple.Create(OsmIndexes.GetVerticalIndex(f.Exif.Gps.Value.Latitude, Zoom + 2),
-                                                      OsmIndexes.GetHorizontalIndex(f.Exif.Gps.Value.Longitude, Zoom + 2)))
-                           .Select(g => CreateMapElement(g.ToList()))
-                           .ToList();
+            get => _visibleArea;
+            set => this.RaiseAndSetIfChanged(ref _visibleArea, value);
         }
 
-        private MapElement CreateMapElement(ICollection<IPhotoEntity> Photos)
+        private void SynchronizeMapElements(IList<GeoStack> Elements)
         {
-            var position = new EarthPoint(new Degree(Photos.Average(f => f.Exif.Gps.Value.Latitude)),
-                                          new Degree(Photos.Average(f => f.Exif.Gps.Value.Longitude)));
-            return new PhotoMapElement(position, Photos.Last(), Photos.Count);
+            foreach (var element in _visibleStacks.ToList())
+            {
+                var comparer = GeoStack.ValueComparer;
+                var elementInNew = Elements.FirstOrDefault(e => comparer.Equals(e, element));
+
+                if (elementInNew == null)
+                    _visibleStacks.Remove(element);
+                else
+                    Elements.Remove(elementInNew);
+            }
+            foreach (var element in Elements)
+                _visibleStacks.Add(element);
+        }
+
+        private MapElement CreateMapElement(GeoStack Stack)
+        {
+            var position = new EarthPoint(new Degree(Stack.Points.Average(p => p.Latitude)),
+                                          new Degree(Stack.Points.Average(p => p.Longitude)));
+            return new PhotoMapElement(position, Stack.Points.Count, _gallery.OpenThumbnail(Stack.LastPhoto));
         }
     }
 }

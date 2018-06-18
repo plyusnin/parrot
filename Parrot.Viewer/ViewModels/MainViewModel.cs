@@ -20,7 +20,8 @@ namespace Parrot.Viewer.ViewModels
         {
             var directory = App.Arguments[0];
 
-            IGallery gallery = new DatabaseGallery();
+            var indexer = new OsmGeoIndexer();
+            IGallery gallery = new DatabaseGallery(indexer);
             FolderGalleryManager manager = new FolderGalleryManager(gallery, directory);
 
             Gallery = new GalleryViewModel(gallery) { Directory = directory };
@@ -33,7 +34,7 @@ namespace Parrot.Viewer.ViewModels
             Gallery.WhenAnyValue(x => x.SelectedPhotoIndex)
                    .Subscribe(i => Single.Index = i);
 
-            //Map = new MapViewModel(source);
+            Map = new MapViewModel(gallery, indexer);
 
             SwitchFullScreen = ReactiveCommand.Create(() => FullScreenMode = !FullScreenMode);
         }

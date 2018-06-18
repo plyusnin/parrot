@@ -14,14 +14,21 @@ namespace Parrot.Viewer.GallerySources.Database
     {
         private readonly LiteDatabase _db;
         private readonly CompositeDisposable _disposeOnExit = new CompositeDisposable();
+        private readonly IGeoIndexer _geoIndexer;
+        private readonly LiteCollection<DbGeotag> _geotags;
         private readonly LiteCollection<DbPhotoRecord> _photos;
 
-        public DatabaseGallery()
+        public DatabaseGallery(IGeoIndexer GeoIndexer)
         {
+            _geoIndexer = GeoIndexer;
             _db = new LiteDatabase("gallery.db")
                 .DisposeWith(_disposeOnExit);
 
+            //BsonMapper.Global.Entity<DbGeotag>()
+            //          .DbRef(x => x.Photo, "photos");
+
             _photos = _db.GetCollection<DbPhotoRecord>("photos");
+            _geotags = _db.GetCollection<DbGeotag>("geotags");
         }
 
         public void Dispose()
@@ -58,7 +65,29 @@ namespace Parrot.Viewer.GallerySources.Database
             _photos.EnsureIndex(x => x.FileName);
             _photos.EnsureIndex(x => x.ShotTime);
 
+            if (Entity.Exif.Gps != null)
+            {
+                var geotags = _geoIndexer.ListGeotagsFor(Entity.Exif.Gps.Value)
+                                         .Select(t => new DbGeotag
+                                         {
+                                             Scale = t.Scale,
+                                             X = t.X,
+                                             Y = t.Y,
+                                             ShotTime = Entity.Exif.ShotTime,
+                                             Longitude = Entity.Exif.Gps.Value.Longitude,
+                                             Latitude = Entity.Exif.Gps.Value.Latitude,
+                                             PhotoId = record.Id
+                                         });
+                _geotags.Insert(geotags);
+            }
+            _geotags.EnsureIndex(x => x.PhotoId);
+            _geotags.EnsureIndex(x => x.Scale);
+            _geotags.EnsureIndex(x => x.X);
+            _geotags.EnsureIndex(x => x.Y);
+            _geotags.EnsureIndex(x => x.ShotTime);
+
             _db.FileStorage.Upload($"$/thumbnails/{record.Id}.jpg", $"{record.Id}.jpg", Thumbnail);
+            Console.WriteLine($" --> Added to Galery: {Entity.FileName}");
         }
 
         public IList<IPhotoEntity> All()
@@ -79,6 +108,27 @@ namespace Parrot.Viewer.GallerySources.Database
             return _photos.Find(Query.All(nameof(DbPhotoRecord.ShotTime), -1), Offset, Count)
                           .Select(ToPhotoEntity)
                           .ToList();
+        }
+
+        public IList<GeoStack> GetPhotosOnMap(int Scale, int FromX, int ToX, int FromY, int ToY)
+        {
+            var tags = _geotags.Find(t => t.Scale == Scale && t.X >= FromX && t.X <= ToX && t.Y >= FromY && t.Y <= ToY)
+                               .OrderByDescending(t => t.ShotTime)
+                               .GroupBy(t => new { t.X, t.Y })
+                               .ToList();
+            return tags.Where(tg => tg.Any())
+                       .Select(tg => new GeoStack(tg.Select(t => new EarthPoint(t.Latitude, t.Longitude)).ToList(),
+                                                  ToPhotoEntity(_photos.FindById(tg.First().PhotoId))))
+                       .ToList();
+        }
+
+        public IList<GeoStack> GetPhotosOnMap(int Scale, EarthArea ForArea)
+        {
+            return GetPhotosOnMap(Scale,
+                                  _geoIndexer.GetX(ForArea.MostWesternLongitude, Scale),
+                                  _geoIndexer.GetX(ForArea.MostEasternLongitude, Scale),
+                                  _geoIndexer.GetY(ForArea.MostNorthenLatitude, Scale),
+                                  _geoIndexer.GetY(ForArea.MostSouthernLatitude, Scale));
         }
 
         private IPhotoEntity ToPhotoEntity(DbPhotoRecord Record)

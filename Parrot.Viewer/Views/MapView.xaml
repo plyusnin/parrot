@@ -8,7 +8,9 @@
              xmlns:mapControl="clr-namespace:MapVisualization;assembly=MapVisualization"
              d:DataContext="{d:DesignInstance map:MapViewModel}">
     <Grid>
-        <mapControl:MapView CentralPoint="{Binding MapCenter}" ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+        <mapControl:MapView CentralPoint="{Binding MapCenter}"
+                            ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+                            VisibleArea="{Binding VisibleArea, Mode=OneWayToSource}"
                             ElementsSource="{Binding MapElements}" TileLoader="{Binding TileLoader}"
                             Focusable="True" />
     </Grid>
