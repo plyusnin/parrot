@@ -16,6 +16,7 @@ namespace Parrot.Viewer.GallerySources
         IList<IPhotoEntity> All(int Offset, int Count);
         IList<GeoStack> GetPhotosOnMap(int Scale, int FromX, int ToX, int FromY, int ToY);
         IList<GeoStack> GetPhotosOnMap(int Scale, EarthArea ForArea);
+        int Count { get; }
     }
 
     public class GeoStack

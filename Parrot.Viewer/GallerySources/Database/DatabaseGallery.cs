@@ -131,6 +131,8 @@ namespace Parrot.Viewer.GallerySources.Database
                                   _geoIndexer.GetY(ForArea.MostSouthernLatitude, Scale));
         }
 
+        public int Count => _photos.Count();
+
         private IPhotoEntity ToPhotoEntity(DbPhotoRecord Record)
         {
             var gps = Record.hasGps

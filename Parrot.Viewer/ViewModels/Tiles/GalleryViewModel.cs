@@ -65,6 +65,8 @@ namespace Parrot.Viewer.ViewModels.Tiles
             //               .ToList();
         }
 
+        public int Count => _gallery.Count;
+
         public class ViewModelAdapter : ITileViewModel
         {
             private readonly BitmapImage _imageSource;

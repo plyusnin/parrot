@@ -10,7 +10,9 @@
              d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
         <Border Margin="00" BorderThickness="1" BorderBrush="YellowGreen">
-            <tileView:TilesList TilesSource="{Binding Tiles}" />
+            <ScrollViewer VerticalScrollBarVisibility="Visible">
+                <tileView:TilesList TilesSource="{Binding Tiles}" Background="DarkOliveGreen" HorizontalAlignment="Center" />
+            </ScrollViewer>
         </Border>
         <!--<tileView:TilesList TilesSource="{Binding Tiles}" />-->
     </Grid>
