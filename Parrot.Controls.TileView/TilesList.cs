@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
@@ -9,6 +8,7 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -18,7 +18,7 @@ using ReactiveUI;
 
 namespace Parrot.Controls.TileView
 {
-    public class TilesList : Panel
+    public class TilesList : Canvas
     {
         public static readonly DependencyProperty TilesSourceProperty = DependencyProperty.Register(
             "TilesSource", typeof(ITilesSource), typeof(TilesList),
@@ -33,9 +33,9 @@ namespace Parrot.Controls.TileView
         public static readonly DependencyProperty ScrollingOffsetProperty = DependencyProperty.Register(
             "ScrollingOffset", typeof(double), typeof(TilesList), new PropertyMetadata(0.0, OnScrollingOffsetChanged));
 
-        private readonly ReactiveList<ITileViewModel> _tileViewModels;
+        private readonly Subject<double> _targetOffset = new Subject<double>();
 
-        private readonly VisualCollection _visuals;
+        private readonly ReactiveList<ITileViewModel> _tileViewModels;
 
         internal readonly TranslateTransform GlobalTransform = new TranslateTransform();
         private int _columns;
@@ -44,16 +44,14 @@ namespace Parrot.Controls.TileView
 
         private Bounds _loadedBounds;
         private int _rows;
-        private readonly Subject<double> _targetOffset = new Subject<double>();
 
         private int _topmostRow;
 
         public TilesList()
         {
             Background = Brushes.Transparent;
-            _visuals = new VisualCollection(this);
             _tileViewModels = new ReactiveList<ITileViewModel>();
-            Tiles = _tileViewModels.CreateDerivedCollection(CreateTiles, RemoveTilesPack, scheduler: DispatcherScheduler.Current);
+            Tiles = _tileViewModels.CreateDerivedCollection(CreateTile, RemoveTilesPack, scheduler: DispatcherScheduler.Current);
             ClipToBounds = true;
 
             //_targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
@@ -87,9 +85,7 @@ namespace Parrot.Controls.TileView
             set => SetValue(TilesSourceProperty, value);
         }
 
-        protected override int VisualChildrenCount => _visuals.Count;
-
-        private IReactiveDerivedList<TilesPack> Tiles { get; }
+        private IReactiveDerivedList<Tile> Tiles { get; }
 
         private void ScrollTo(double Offset)
         {
@@ -159,39 +155,39 @@ namespace Parrot.Controls.TileView
             Rearrange();
         }
 
-        private void RemoveTilesPack(TilesPack Tiles)
+        private void RemoveTilesPack(Tile Tile)
         {
-            foreach (var visual in Tiles.EnumerateVisuals()) DeleteVisual(visual);
+            Children.Remove(Tile.Image);
         }
 
-        private TilesPack CreateTiles(ITileViewModel ViewModel)
+        private Tile CreateTile(ITileViewModel ViewModel)
         {
-            var pack = new TilesPack(this, ViewModel.Index, ViewModel.ThumbnailStream);
-            RefreshTilePosition(pack);
-            foreach (var visual in pack.EnumerateVisuals())
-                visual.WhenReady.ContinueWith(t => Dispatcher.BeginInvoke((Action<TileHostVisual>)AddVisual, visual));
-            return pack;
+            var imageSource = new BitmapImage();
+            imageSource.BeginInit();
+            imageSource.StreamSource = ViewModel.ThumbnailStream;
+            imageSource.EndInit();
+
+            var image = new Image
+            {
+                Source = imageSource,
+                Width = TileSize.Width,
+                Height = TileSize.Height
+            };
+            Children.Add(image);
+            var tile = new Tile(ViewModel.Index, image);
+            RefreshTilePosition(tile);
+            return tile;
         }
 
-        protected override Visual GetVisualChild(int index)
+        protected override Size MeasureOverride(Size constraint)
         {
-            return _visuals[index];
-        }
+            if (TilesSource == null)
+                return new Size();
 
-        protected void AddVisual(TileHostVisual v)
-        {
-            int index;
-            for (index = _visuals.Count; index > 0; index--)
-                if (((TileHostVisual)_visuals[index - 1]).ZIndex <= v.ZIndex)
-                    break;
-
-            _visuals.Insert(index, v);
-            v.Draw();
-        }
-
-        protected void DeleteVisual(TileHostVisual v)
-        {
-            _visuals.Remove(v);
+            var cols = (int)Math.Floor((constraint.Width + TileSpace) / (TileSize.Width + TileSpace));
+            var rows = TilesSource.Count / cols;
+            return new Size((TileSize.Width + TileSpace) * cols,
+                            (TileSize.Height + TileSpace) * rows);
         }
 
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
@@ -210,7 +206,8 @@ namespace Parrot.Controls.TileView
                 _columns = newColumns;
                 _rows = newRows;
 
-                ScrollingOffset = Math.Max(Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow, 0);
+                ScrollingOffset =
+                    Math.Max(Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow, 0);
                 _lastTargetOffset = ScrollingOffset;
                 _targetOffset.OnNext(ScrollingOffset);
 
@@ -229,19 +226,21 @@ namespace Parrot.Controls.TileView
             foreach (var tile in Tiles) RefreshTilePosition(tile);
         }
 
-        private void RefreshTilePosition(TilesPack tile)
+        private void RefreshTilePosition(Tile tile)
         {
             tile.Position =
                 new GridPosition(tile.Index % _columns,
                                  tile.Index / _columns);
+            Canvas.SetLeft(tile.Image, tile.Position.X * (TileSize.Width + TileSpace));
+            Canvas.SetTop(tile.Image, tile.Position.Y * (TileSize.Height + TileSpace));
         }
 
-        protected override void OnMouseWheel(MouseWheelEventArgs e)
-        {
-            _targetOffset.OnNext(_lastTargetOffset = Math.Max(0, _lastTargetOffset - e.Delta * 0.4));
-            //ScrollingOffset = _targetOffset;
-            base.OnMouseWheel(e);
-        }
+        //protected override void OnMouseWheel(MouseWheelEventArgs e)
+        //{
+        //    _targetOffset.OnNext(_lastTargetOffset = Math.Max(0, _lastTargetOffset - e.Delta * 0.4));
+        //    //ScrollingOffset = _targetOffset;
+        //    base.OnMouseWheel(e);
+        //}
 
         private struct Bounds
         {
@@ -258,6 +257,7 @@ namespace Parrot.Controls.TileView
     public interface ITilesSource
     {
         IList<ITileViewModel> GetTiles(int StartIndex, int Count);
+        int Count { get; }
     }
 
     internal class TilesPack
@@ -299,6 +299,19 @@ namespace Parrot.Controls.TileView
             yield return PictureVisual;
             //yield return ShadowVisual;
         }
+    }
+
+    internal class Tile
+    {
+        public Tile(int Index, Image Image)
+        {
+            this.Index = Index;
+            this.Image = Image;
+        }
+
+        public int Index { get; }
+        public Image Image { get; private set; }
+        public GridPosition Position { get; set; }
     }
 
     internal class GridPosition
