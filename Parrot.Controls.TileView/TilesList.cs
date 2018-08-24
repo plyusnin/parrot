@@ -8,11 +8,9 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
@@ -52,7 +50,7 @@ namespace Parrot.Controls.TileView
             Background = Brushes.Transparent;
             _tileViewModels = new ReactiveList<ITileViewModel>();
             Tiles = _tileViewModels.CreateDerivedCollection(CreateTile, RemoveTilesPack, scheduler: DispatcherScheduler.Current);
-            ClipToBounds = true;
+            //ClipToBounds = true;
 
             //_targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
             //             .ObserveOnDispatcher()
@@ -162,17 +160,33 @@ namespace Parrot.Controls.TileView
 
         private Tile CreateTile(ITileViewModel ViewModel)
         {
-            var imageSource = new BitmapImage();
-            imageSource.BeginInit();
-            imageSource.StreamSource = ViewModel.ThumbnailStream;
-            imageSource.EndInit();
+            //var imageSource = new BitmapImage();
+            //imageSource.BeginInit();
+            //imageSource.StreamSource = ViewModel.ThumbnailStream;
+            //imageSource.EndInit();
 
-            var image = new Image
+            //var image = new Image
+            //{
+            //    Source = imageSource,
+            //    Width = TileSize.Width,
+            //    Height = TileSize.Height
+            //};
+
+            var image = new Grid
             {
-                Source = imageSource,
+                Background = Brushes.Brown,
                 Width = TileSize.Width,
                 Height = TileSize.Height
             };
+            image.Children.Add(new TextBlock()
+            {
+                Text = ViewModel.Index.ToString(), 
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Foreground = Brushes.White,
+                FontSize = 16
+            });
+
             Children.Add(image);
             var tile = new Tile(ViewModel.Index, image);
             RefreshTilePosition(tile);
@@ -181,13 +195,15 @@ namespace Parrot.Controls.TileView
 
         protected override Size MeasureOverride(Size constraint)
         {
+            var b = base.MeasureOverride(constraint);
             if (TilesSource == null)
                 return new Size();
 
             var cols = (int)Math.Floor((constraint.Width + TileSpace) / (TileSize.Width + TileSpace));
             var rows = TilesSource.Count / cols;
-            return new Size((TileSize.Width + TileSpace) * cols,
-                            (TileSize.Height + TileSpace) * rows);
+            var res = new Size((TileSize.Width + TileSpace) * cols,
+                               (TileSize.Height + TileSpace) * rows);
+            return res;
         }
 
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
@@ -231,8 +247,8 @@ namespace Parrot.Controls.TileView
             tile.Position =
                 new GridPosition(tile.Index % _columns,
                                  tile.Index / _columns);
-            Canvas.SetLeft(tile.Image, tile.Position.X * (TileSize.Width + TileSpace));
-            Canvas.SetTop(tile.Image, tile.Position.Y * (TileSize.Height + TileSpace));
+            SetLeft(tile.Image, tile.Position.X * (TileSize.Width + TileSpace));
+            SetTop(tile.Image, tile.Position.Y * (TileSize.Height + TileSpace));
         }
 
         //protected override void OnMouseWheel(MouseWheelEventArgs e)
@@ -256,8 +272,8 @@ namespace Parrot.Controls.TileView
 
     public interface ITilesSource
     {
-        IList<ITileViewModel> GetTiles(int StartIndex, int Count);
         int Count { get; }
+        IList<ITileViewModel> GetTiles(int StartIndex, int Count);
     }
 
     internal class TilesPack
@@ -303,14 +319,14 @@ namespace Parrot.Controls.TileView
 
     internal class Tile
     {
-        public Tile(int Index, Image Image)
+        public Tile(int Index, FrameworkElement Image)
         {
             this.Index = Index;
             this.Image = Image;
         }
 
         public int Index { get; }
-        public Image Image { get; private set; }
+        public FrameworkElement Image { get; }
         public GridPosition Position { get; set; }
     }
 
