@@ -12,10 +12,10 @@
         <Border Margin="00" BorderThickness="1" BorderBrush="YellowGreen">
             <ScrollViewer VerticalScrollBarVisibility="Visible" Name="Scroller">
                 <tileView:TilesList TilesSource="{Binding Tiles}" Background="#3C556B2F" HorizontalAlignment="Center" VerticalAlignment="Top"
-                                    Name="canvas" ScrollingOffset="{Binding ElementName=Scroller, Path=VerticalOffset, Mode=OneWay}" />
+                                    ScrollingOffset="{Binding ElementName=Scroller, Path=VerticalOffset, Mode=OneWay}"
+                                    VisibleHeight="{Binding ElementName=Scroller, Path=ViewportHeight}" />
             </ScrollViewer>
         </Border>
         <!--<tileView:TilesList TilesSource="{Binding Tiles}" />-->
-        <TextBlock Text="{Binding ElementName=Scroller, Path=VerticalOffset, Mode=OneWay}" HorizontalAlignment="Left" VerticalAlignment="Center" />
     </Grid>
 </UserControl>

@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
-using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Shapes;
+using System.Windows.Media.Imaging;
 using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
@@ -18,6 +17,9 @@ namespace Parrot.Controls.TileView
 {
     public class TilesList : Canvas
     {
+        public static readonly DependencyProperty VisibleHeightProperty = DependencyProperty.Register(
+            "VisibleHeight", typeof(double), typeof(TilesList), new PropertyMetadata(default(double), VisibleHeightChangedCallback));
+
         public static readonly DependencyProperty TilesSourceProperty = DependencyProperty.Register(
             "TilesSource", typeof(ITilesSource), typeof(TilesList),
             new PropertyMetadata(default(ITilesSource), OnTilesSourceChangedCallback));
@@ -55,8 +57,14 @@ namespace Parrot.Controls.TileView
             //_targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
             //             .ObserveOnDispatcher()
             //             .Subscribe(ScrollTo);
-            _targetOffset.ObserveOnDispatcher()
-                         .Subscribe(offset => ScrollingOffset = offset);
+            //_targetOffset.ObserveOnDispatcher()
+            //             .Subscribe(offset => ScrollingOffset = offset);
+        }
+
+        public double VisibleHeight
+        {
+            get => (double)GetValue(VisibleHeightProperty);
+            set => SetValue(VisibleHeightProperty, value);
         }
 
         public double ScrollingOffset
@@ -85,6 +93,23 @@ namespace Parrot.Controls.TileView
 
         private IReactiveDerivedList<Tile> Tiles { get; }
 
+        private static void VisibleHeightChangedCallback(DependencyObject O, DependencyPropertyChangedEventArgs PropertyChangedEventArgs)
+        {
+            ((TilesList)O).OnVisibleHeightChanged((double)PropertyChangedEventArgs.NewValue);
+        }
+
+        private void OnVisibleHeightChanged(double NewHeight)
+        {
+            var rowHeight = TileSize.Height + TileSpace;
+            var newRows = (int)Math.Ceiling((NewHeight + TileSpace) / rowHeight) + 1;
+
+            if (newRows != _rows)
+            {
+                _rows = newRows;
+                UpdateGridContent();
+            }
+        }
+
         private void ScrollTo(double Offset)
         {
             var duration = TimeSpan.FromMilliseconds(1.5 * Math.Abs(Offset - (double)GetValue(ScrollingOffsetProperty)));
@@ -104,7 +129,6 @@ namespace Parrot.Controls.TileView
 
         private void ScrollChanged()
         {
-            GlobalTransform.Y = -ScrollingOffset;
             UpdateGridContent();
         }
 
@@ -160,32 +184,32 @@ namespace Parrot.Controls.TileView
 
         private Tile CreateTile(ITileViewModel ViewModel)
         {
-            //var imageSource = new BitmapImage();
-            //imageSource.BeginInit();
-            //imageSource.StreamSource = ViewModel.ThumbnailStream;
-            //imageSource.EndInit();
+            var imageSource = new BitmapImage();
+            imageSource.BeginInit();
+            imageSource.StreamSource = ViewModel.ThumbnailStream;
+            imageSource.EndInit();
 
-            //var image = new Image
-            //{
-            //    Source = imageSource,
-            //    Width = TileSize.Width,
-            //    Height = TileSize.Height
-            //};
-
-            var image = new Grid
+            var image = new Image
             {
-                Background = Brushes.Brown,
+                Source = imageSource,
                 Width = TileSize.Width,
                 Height = TileSize.Height
             };
-            image.Children.Add(new TextBlock()
-            {
-                Text = ViewModel.Index.ToString(), 
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = Brushes.White,
-                FontSize = 16
-            });
+
+            //var image = new Grid
+            //{
+            //    Background = Brushes.Brown,
+            //    Width = TileSize.Width,
+            //    Height = TileSize.Height
+            //};
+            //image.Children.Add(new TextBlock
+            //{
+            //    Text = ViewModel.Index.ToString(),
+            //    VerticalAlignment = VerticalAlignment.Center,
+            //    HorizontalAlignment = HorizontalAlignment.Center,
+            //    Foreground = Brushes.White,
+            //    FontSize = 16
+            //});
 
             Children.Add(image);
             var tile = new Tile(ViewModel.Index, image);
@@ -201,8 +225,8 @@ namespace Parrot.Controls.TileView
 
             var cols = (int)Math.Floor((constraint.Width + TileSpace) / (TileSize.Width + TileSpace));
             var rows = TilesSource.Count / cols;
-            var res = new Size((TileSize.Width + TileSpace) * cols,
-                               (TileSize.Height + TileSpace) * rows);
+            var res = new Size((TileSize.Width + TileSpace) * cols - TileSpace,
+                               (TileSize.Height + TileSpace) * rows - TileSpace);
             return res;
         }
 
@@ -212,18 +236,18 @@ namespace Parrot.Controls.TileView
             var rowHeight = TileSize.Height + TileSpace;
 
             var newColumns = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
-            var newRows = (int)Math.Ceiling((ActualHeight + TileSpace) / rowHeight) + 1;
 
-            if (newRows != _rows || newColumns != _columns)
+            if (newColumns != _columns)
             {
                 var centerPhotoIndex = (int)Math.Round(_topmostRow * _columns + 0.5 * _rows * _columns + 0.5 * _columns);
                 var offsetFromTheTopmostRow = ScrollingOffset - rowHeight * _topmostRow;
 
                 _columns = newColumns;
-                _rows = newRows;
 
-                ScrollingOffset =
-                    Math.Max(Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow, 0);
+                SetCurrentValue(ScrollingOffsetProperty,
+                                Math.Max(
+                                    Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow,
+                                    0));
                 _lastTargetOffset = ScrollingOffset;
                 _targetOffset.OnNext(ScrollingOffset);
 
