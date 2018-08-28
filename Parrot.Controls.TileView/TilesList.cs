@@ -170,7 +170,7 @@ namespace Parrot.Controls.TileView
                              if (newBounds.Max > maxExistingIndex)
                              {
                                  var from = Math.Max(newBounds.Min, maxExistingIndex + 1);
-                                 newTiles.AddRange(tilesSource.GetTiles(from, newBounds.Max - from - 1));
+                                 newTiles.AddRange(tilesSource.GetTiles(from, newBounds.Max - from));
                              }
                              if (newBounds.Min < minExistingIndex)
                              {
@@ -286,10 +286,10 @@ namespace Parrot.Controls.TileView
 
                 _columns = newColumns;
 
-                SetCurrentValue(ScrollingOffsetProperty,
-                                Math.Max(
-                                    Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow,
-                                    0));
+                //SetCurrentValue(ScrollingOffsetProperty,
+                //                Math.Max(
+                //                    Math.Round((centerPhotoIndex - 0.5 * _rows * _columns - 0.5 * _columns) / _columns) * rowHeight + offsetFromTheTopmostRow,
+                //                    0));
                 _lastTargetOffset = ScrollingOffset;
                 _targetOffset.OnNext(ScrollingOffset);
 
@@ -310,12 +310,26 @@ namespace Parrot.Controls.TileView
 
         private void RefreshTilePosition(Tile tile)
         {
-            tile.Position =
-                new GridPosition(tile.Index % _columns,
-                                 tile.Index / _columns);
+            var newPosition = new GridPosition(tile.Index % _columns,
+                                               tile.Index / _columns);
+            if (tile.Position != newPosition)
+            {
+                tile.Position =
+                    new GridPosition(tile.Index % _columns,
+                                     tile.Index / _columns);
 
-            SetLeft(tile.Image, tile.Position.X * (TileSize.Width + TileSpace));
-            SetTop(tile.Image, tile.Position.Y * (TileSize.Height + TileSpace));
+                var left = tile.Position.X * (TileSize.Width + TileSpace);
+                var top = tile.Position.Y * (TileSize.Height + TileSpace);
+
+                var easing = new PowerEase { EasingMode = EasingMode.EaseOut };
+                Duration dur = TimeSpan.FromMilliseconds(400);
+
+                tile.Image.BeginAnimation(LeftProperty, new DoubleAnimation { To = left, EasingFunction = easing, Duration = dur });
+                tile.Image.BeginAnimation(TopProperty, new DoubleAnimation { To = top, EasingFunction = easing, Duration = dur });
+
+                SetLeft(tile.Image, tile.Position.X * (TileSize.Width + TileSpace));
+                SetTop(tile.Image, tile.Position.Y * (TileSize.Height + TileSpace));
+            }
         }
 
         private struct Bounds
@@ -363,6 +377,38 @@ namespace Parrot.Controls.TileView
         public override string ToString()
         {
             return $"{X}; {Y}";
+        }
+
+        protected bool Equals(GridPosition other)
+        {
+            return X == other.X
+                   && Y == other.Y;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((GridPosition)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (X * 397) ^ Y;
+            }
+        }
+
+        public static bool operator ==(GridPosition left, GridPosition right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(GridPosition left, GridPosition right)
+        {
+            return !Equals(left, right);
         }
     }
 }
