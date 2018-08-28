@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Subjects;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,6 +47,8 @@ namespace Parrot.Controls.TileView
         private int _rows;
 
         private int _topmostRow;
+
+        private CancellationTokenSource _updateCancellation;
 
         public TilesList()
         {
@@ -140,28 +143,47 @@ namespace Parrot.Controls.TileView
             if (TilesSource == null)
                 return;
 
+            _updateCancellation?.Cancel();
+            _updateCancellation = new CancellationTokenSource();
+            var cancel = _updateCancellation.Token;
+
             var newBounds = new Bounds { Min = _topmostRow * _columns, Max = (_topmostRow + _rows) * _columns };
             if (!_loadedBounds.Equals(newBounds))
             {
-                _tileViewModels.RemoveAll(_tileViewModels.Where(t => t.Index < newBounds.Min || t.Index >= newBounds.Max).ToList());
-
-                var maxExistingIndex = Math.Max(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Max(), newBounds.Min - 1);
-                var minExistingIndex = Math.Min(_tileViewModels.Select(t => t.Index).DefaultIfEmpty().Min(), newBounds.Max + 1);
+                var maxExistingIndex = _tileViewModels.Select(t => t.Index)
+                                                      .DefaultIfEmpty(-1)
+                                                      .Max();
+                var minExistingIndex = _tileViewModels.Select(t => t.Index)
+                                                      .DefaultIfEmpty(-1)
+                                                      .Min();
 
                 var tilesSource = TilesSource;
                 var tilesToAdd = await Task.Run(() =>
                                                 {
                                                     var newTiles = new List<ITileViewModel>();
-                                                    if (maxExistingIndex < newBounds.Max)
-                                                        newTiles.AddRange(tilesSource.GetTiles(maxExistingIndex + 1, newBounds.Max - maxExistingIndex - 1));
-                                                    if (minExistingIndex > newBounds.Min)
-                                                        newTiles.AddRange(tilesSource.GetTiles(newBounds.Min, minExistingIndex - newBounds.Min));
+                                                    if (newBounds.Max > maxExistingIndex)
+                                                    {
+                                                        var from = Math.Max(newBounds.Min, maxExistingIndex + 1);
+                                                        newTiles.AddRange(tilesSource.GetTiles(from, newBounds.Max - from - 1));
+                                                    }
+                                                    if (newBounds.Min < minExistingIndex)
+                                                    {
+                                                        var to = Math.Min(minExistingIndex, newBounds.Max);
+                                                        newTiles.AddRange(tilesSource.GetTiles(newBounds.Min, to - newBounds.Min));
+                                                    }
                                                     return newTiles;
-                                                });
-                _tileViewModels.AddRange(tilesToAdd);
+                                                }, cancel);
 
-                _loadedBounds = newBounds;
-                Console.WriteLine($"New bounds: {_loadedBounds}");
+                if (!cancel.IsCancellationRequested)
+                {
+                    var tilessss = tilesToAdd;
+
+                    _tileViewModels.RemoveAll(_tileViewModels.Where(t => t.Index < newBounds.Min || t.Index >= newBounds.Max).ToList());
+                    _tileViewModels.AddRange(tilessss);
+
+                    Console.WriteLine($"Bounds: {_loadedBounds} -> {newBounds}    ({tilessss.Count} added)");
+                    _loadedBounds = newBounds;
+                }
             }
         }
 
