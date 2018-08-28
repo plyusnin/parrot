@@ -88,6 +88,11 @@ namespace Parrot.Viewer.ViewModels.Tiles
             public Stream ThumbnailStream { get; }
 
             //public ImageSource ImageSource => _imageSource;
+
+            public override string ToString()
+            {
+                return $"{Index.ToString().PadLeft(4)}  {Path.GetFileNameWithoutExtension(_photo.FileName)}";
+            }
         }
     }
 }
