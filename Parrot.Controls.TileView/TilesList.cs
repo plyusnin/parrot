@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Subjects;
@@ -11,8 +10,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
-using Parrot.Controls.TileView.Visuals;
 using ReactiveUI;
 
 namespace Parrot.Controls.TileView
@@ -24,22 +21,30 @@ namespace Parrot.Controls.TileView
 
         public static readonly DependencyProperty TilesSourceProperty = DependencyProperty.Register(
             "TilesSource", typeof(ITilesSource), typeof(TilesList),
-            new PropertyMetadata(default(ITilesSource), OnTilesSourceChangedCallback));
+            new FrameworkPropertyMetadata(default(ITilesSource),
+                                          FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsRender,
+                                          OnTilesSourceChangedCallback));
 
         public static readonly DependencyProperty TileSizeProperty = DependencyProperty.Register(
-            "TileSize", typeof(Size), typeof(TilesList), new PropertyMetadata(new Size(100, 100)));
+            "TileSize", typeof(Size), typeof(TilesList),
+            new FrameworkPropertyMetadata(new Size(100, 100),
+                                          FrameworkPropertyMetadataOptions.AffectsMeasure));
 
         public static readonly DependencyProperty TileSpaceProperty = DependencyProperty.Register(
-            "TileSpace", typeof(double), typeof(TilesList), new PropertyMetadata(15.0));
+            "TileSpace", typeof(double), typeof(TilesList),
+            new FrameworkPropertyMetadata(15.0,
+                                          FrameworkPropertyMetadataOptions.AffectsMeasure));
 
         public static readonly DependencyProperty ScrollingOffsetProperty = DependencyProperty.Register(
-            "ScrollingOffset", typeof(double), typeof(TilesList), new PropertyMetadata(0.0, OnScrollingOffsetChanged));
+            "ScrollingOffset", typeof(double), typeof(TilesList),
+            new FrameworkPropertyMetadata(0.0,
+                                          FrameworkPropertyMetadataOptions.AffectsRender,
+                                          OnScrollingOffsetChanged));
 
         private readonly Subject<double> _targetOffset = new Subject<double>();
 
         private readonly ReactiveList<ITileViewModel> _tileViewModels;
 
-        internal readonly TranslateTransform GlobalTransform = new TranslateTransform();
         private int _columns;
 
         private double _lastTargetOffset;
@@ -177,7 +182,6 @@ namespace Parrot.Controls.TileView
                                  Dispatcher.BeginInvoke((Action<List<ITileViewModel>, Bounds, CancellationToken>)SubmitNew,
                                                         newTiles, newBounds, cancel);
                          }, cancel);
-
             }
         }
 
@@ -204,7 +208,9 @@ namespace Parrot.Controls.TileView
         {
             _tileViewModels.Clear();
             _tileViewModels.AddRange(TilesSource.GetTiles(0, _rows * _columns));
+
             Rearrange();
+            UpdateGridContent();
         }
 
         private void RemoveTilesPack(Tile Tile)
@@ -219,27 +225,33 @@ namespace Parrot.Controls.TileView
             imageSource.StreamSource = ViewModel.ThumbnailStream;
             imageSource.EndInit();
 
-            var image = new Image
+            //var image = new Image
+            //{
+            //    Source = imageSource,
+            //    Width = TileSize.Width,
+            //    Height = TileSize.Height
+            //};
+
+            var image = new Grid
+            {
+                //Background = Brushes.Brown,
+                Width = TileSize.Width,
+                Height = TileSize.Height
+            };
+            image.Children.Add(new Image
             {
                 Source = imageSource,
                 Width = TileSize.Width,
                 Height = TileSize.Height
-            };
-
-            //var image = new Grid
-            //{
-            //    Background = Brushes.Brown,
-            //    Width = TileSize.Width,
-            //    Height = TileSize.Height
-            //};
-            //image.Children.Add(new TextBlock
-            //{
-            //    Text = ViewModel.Index.ToString(),
-            //    VerticalAlignment = VerticalAlignment.Center,
-            //    HorizontalAlignment = HorizontalAlignment.Center,
-            //    Foreground = Brushes.White,
-            //    FontSize = 16
-            //});
+            });
+            image.Children.Add(new TextBlock
+            {
+                Text = ViewModel.Index.ToString(),
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Foreground = Brushes.White,
+                FontSize = 16
+            });
 
             Children.Add(image);
             var tile = new Tile(ViewModel.Index, image);
@@ -260,12 +272,12 @@ namespace Parrot.Controls.TileView
             return res;
         }
 
-        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+        protected override Size ArrangeOverride(Size arrangeSize)
         {
-            base.OnRenderSizeChanged(sizeInfo);
-            var rowHeight = TileSize.Height + TileSpace;
+            var arrange = base.ArrangeOverride(arrangeSize);
 
-            var newColumns = (int)Math.Floor((ActualWidth + TileSpace) / (TileSize.Width + TileSpace));
+            var rowHeight = TileSize.Height + TileSpace;
+            var newColumns = (int)Math.Floor((arrangeSize.Width + TileSpace) / (TileSize.Width + TileSpace));
 
             if (newColumns != _columns)
             {
@@ -285,7 +297,7 @@ namespace Parrot.Controls.TileView
                 UpdateGridContent();
             }
 
-            GlobalTransform.X = 0.5 * (ActualWidth - TileSpace * (_columns - 1) - TileSize.Width * _columns);
+            return arrange;
         }
 
         private void Rearrange()
@@ -301,16 +313,10 @@ namespace Parrot.Controls.TileView
             tile.Position =
                 new GridPosition(tile.Index % _columns,
                                  tile.Index / _columns);
+
             SetLeft(tile.Image, tile.Position.X * (TileSize.Width + TileSpace));
             SetTop(tile.Image, tile.Position.Y * (TileSize.Height + TileSpace));
         }
-
-        //protected override void OnMouseWheel(MouseWheelEventArgs e)
-        //{
-        //    _targetOffset.OnNext(_lastTargetOffset = Math.Max(0, _lastTargetOffset - e.Delta * 0.4));
-        //    //ScrollingOffset = _targetOffset;
-        //    base.OnMouseWheel(e);
-        //}
 
         private struct Bounds
         {
@@ -328,47 +334,6 @@ namespace Parrot.Controls.TileView
     {
         int Count { get; }
         IList<ITileViewModel> GetTiles(int StartIndex, int Count);
-    }
-
-    internal class TilesPack
-    {
-        private readonly TranslateTransform _gridTransform = new TranslateTransform();
-        private readonly TilesList _parent;
-        private GridPosition _position;
-
-        public TilesPack(TilesList Parent, int Index, Stream ThumbnailStream)
-        {
-            _parent = Parent;
-            this.Index = Index;
-
-            var transform = new TransformGroup();
-            transform.Children.Add(_gridTransform);
-            transform.Children.Add(_parent.GlobalTransform);
-
-            PictureVisual = new PictureVisual(ThumbnailStream, _parent.TileSize, Index) { Transform = transform };
-            ShadowVisual = new ShadowVisual(_parent.TileSize) { Transform = transform };
-        }
-
-        public PictureVisual PictureVisual { get; }
-        public ShadowVisual ShadowVisual { get; }
-        public int Index { get; }
-
-        public GridPosition Position
-        {
-            get => _position;
-            set
-            {
-                _position = value;
-                _gridTransform.X = (_parent.TileSize.Width + _parent.TileSpace) * _position.X;
-                _gridTransform.Y = (_parent.TileSize.Height + _parent.TileSpace) * _position.Y;
-            }
-        }
-
-        public IEnumerable<TileHostVisual> EnumerateVisuals()
-        {
-            yield return PictureVisual;
-            //yield return ShadowVisual;
-        }
     }
 
     internal class Tile
