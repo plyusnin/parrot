@@ -1,0 +1,13 @@
+﻿<UserControl x:Class="Parrot.Controls.TileView.TileWall"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Parrot.Controls.TileView"
+             Name="Root" >
+    <ScrollViewer VerticalScrollBarVisibility="Visible" Name="Scroller">
+        <local:TilesList TilesSource="{Binding ElementName=Root, Path=TilesSource}"
+                         SizeChanged="Tiles_OnSizeChanged"
+                         HorizontalAlignment="Center" VerticalAlignment="Top"
+                         ScrollingOffset="{Binding ElementName=Scroller, Path=VerticalOffset}"
+                         VisibleHeight="{Binding ElementName=Scroller, Path=ViewportHeight}" />
+    </ScrollViewer>
+</UserControl>

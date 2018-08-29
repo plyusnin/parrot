@@ -10,11 +10,7 @@
              d:DataContext="{d:DesignInstance tiles:GalleryViewModel}">
     <Grid>
         <Border Margin="00" BorderThickness="1" BorderBrush="YellowGreen">
-            <ScrollViewer VerticalScrollBarVisibility="Visible" Name="Scroller">
-                <tileView:TilesList TilesSource="{Binding Tiles}" HorizontalAlignment="Center" VerticalAlignment="Top"
-                                    ScrollingOffset="{Binding ElementName=Scroller, Path=VerticalOffset}"
-                                    VisibleHeight="{Binding ElementName=Scroller, Path=ViewportHeight}" />
-            </ScrollViewer>
+            <tileView:TileWall TilesSource="{Binding Tiles}" />
         </Border>
         <!--<tileView:TilesList TilesSource="{Binding Tiles}" />-->
     </Grid>
