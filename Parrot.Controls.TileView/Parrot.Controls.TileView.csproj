@@ -73,7 +73,6 @@
     <Compile Include="TileWall.xaml.cs">
       <DependentUpon>TileWall.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Visuals\TileHostVisual.cs" />
     <Compile Include="TilesList.cs" />
   </ItemGroup>
   <ItemGroup>

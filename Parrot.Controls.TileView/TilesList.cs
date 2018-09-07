@@ -194,7 +194,6 @@ namespace Parrot.Controls.TileView
                 _tileViewModels.RemoveAll(_tileViewModels.Where(t => t.Index < Bounds.Min || t.Index >= Bounds.Max).ToList());
                 _tileViewModels.AddRange(tilessss);
 
-                Console.WriteLine($"Bounds: {_loadedBounds} -> {Bounds}    ({tilessss.Count} added)");
                 _loadedBounds = Bounds;
             }
         }
