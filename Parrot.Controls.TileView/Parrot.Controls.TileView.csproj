@@ -70,6 +70,7 @@
   <ItemGroup>
     <Compile Include="ITileViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TileViewModel.cs" />
     <Compile Include="TileWall.xaml.cs">
       <DependentUpon>TileWall.xaml</DependentUpon>
     </Compile>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Parrot.Controls.TileView;
 using Parrot.Viewer.GallerySources;
@@ -58,7 +57,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
         public IList<ITileViewModel> GetTiles(int StartIndex, int Count)
         {
             return _gallery.All(StartIndex, Count)
-                           .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, tile, _gallery.OpenThumbnail(tile)))
+                           .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, tile, _gallery))
                            .ToList();
             //return Enumerable.Range(StartIndex, Count)
             //               .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, new PhotoEntity("sasdf", null), null))
@@ -69,14 +68,16 @@ namespace Parrot.Viewer.ViewModels.Tiles
 
         public class ViewModelAdapter : ITileViewModel
         {
+            private readonly IGallery _gallery;
             private readonly BitmapImage _imageSource;
             private readonly IPhotoEntity _photo;
 
-            public ViewModelAdapter(int Index, IPhotoEntity Photo, Stream ThumbnailStream)
+            public ViewModelAdapter(int Index, IPhotoEntity Photo, IGallery Gallery)
             {
                 this.Index = Index;
-                this.ThumbnailStream = ThumbnailStream;
                 _photo = Photo;
+                _gallery = Gallery;
+                Name = Photo.FileName;
 
                 //image.BeginInit();
                 //image.DownloadCompleted += (s, e) => ThumbnailStream.Dispose();
@@ -85,7 +86,12 @@ namespace Parrot.Viewer.ViewModels.Tiles
             }
 
             public int Index { get; }
-            public Stream ThumbnailStream { get; }
+            public string Name { get; }
+
+            Stream ITileViewModel.OpenThumbnail()
+            {
+                return _gallery.OpenThumbnail(_photo);
+            }
 
             //public ImageSource ImageSource => _imageSource;
 

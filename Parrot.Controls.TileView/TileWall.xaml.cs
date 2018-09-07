@@ -10,9 +10,18 @@ namespace Parrot.Controls.TileView
             "TilesSource", typeof(ITilesSource), typeof(TileWall),
             new FrameworkPropertyMetadata(default(ITilesSource)));
 
+        public static readonly DependencyProperty TileTemplateProperty = DependencyProperty.Register(
+            "TileTemplate", typeof(DataTemplate), typeof(TileWall), new PropertyMetadata(default(DataTemplate)));
+
         public TileWall()
         {
             InitializeComponent();
+        }
+
+        public DataTemplate TileTemplate
+        {
+            get => (DataTemplate)GetValue(TileTemplateProperty);
+            set => SetValue(TileTemplateProperty, value);
         }
 
         public ITilesSource TilesSource

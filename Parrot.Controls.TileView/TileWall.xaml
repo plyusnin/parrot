@@ -2,12 +2,28 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Parrot.Controls.TileView"
-             Name="Root" >
+             Name="Root">
     <ScrollViewer VerticalScrollBarVisibility="Visible" Name="Scroller">
         <local:TilesList TilesSource="{Binding ElementName=Root, Path=TilesSource}"
                          SizeChanged="Tiles_OnSizeChanged"
                          HorizontalAlignment="Center" VerticalAlignment="Top"
                          ScrollingOffset="{Binding ElementName=Scroller, Path=VerticalOffset}"
-                         VisibleHeight="{Binding ElementName=Scroller, Path=ViewportHeight}" />
+                         VisibleHeight="{Binding ElementName=Scroller, Path=ViewportHeight}">
+            <local:TilesList.TileTemplate>
+                <DataTemplate DataType="{x:Type local:TileViewModel}">
+                    <Border>
+                        <Grid>
+                            <Image Source="{Binding Thumbnail}" />
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                       Text="{Binding Name}"
+                                       Foreground="White" FontSize="12" />
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Text="{Binding Index}"
+                                       Foreground="White" FontSize="16" Opacity="0.8" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </local:TilesList.TileTemplate>
+        </local:TilesList>
     </ScrollViewer>
 </UserControl>

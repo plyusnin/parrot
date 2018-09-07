@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using ReactiveUI;
 
 namespace Parrot.Controls.TileView
@@ -41,6 +40,9 @@ namespace Parrot.Controls.TileView
                                           FrameworkPropertyMetadataOptions.AffectsRender,
                                           OnScrollingOffsetChanged));
 
+        public static readonly DependencyProperty TileTemplateProperty = DependencyProperty.Register(
+            "TileTemplate", typeof(DataTemplate), typeof(TilesList), new PropertyMetadata(default(DataTemplate)));
+
         private readonly Subject<double> _targetOffset = new Subject<double>();
 
         private readonly ReactiveList<ITileViewModel> _tileViewModels;
@@ -51,6 +53,8 @@ namespace Parrot.Controls.TileView
 
         private Bounds _loadedBounds;
         private int _rows;
+
+        private readonly TileViewModelFactory _tileViewModelFactory = new TileViewModelFactory();
 
         private int _topmostRow;
 
@@ -68,6 +72,12 @@ namespace Parrot.Controls.TileView
             //             .Subscribe(ScrollTo);
             //_targetOffset.ObserveOnDispatcher()
             //             .Subscribe(offset => ScrollingOffset = offset);
+        }
+
+        public DataTemplate TileTemplate
+        {
+            get => (DataTemplate)GetValue(TileTemplateProperty);
+            set => SetValue(TileTemplateProperty, value);
         }
 
         public double VisibleHeight
@@ -217,43 +227,19 @@ namespace Parrot.Controls.TileView
             Children.Remove(Tile.Image);
         }
 
-        private Tile CreateTile(ITileViewModel ViewModel)
+        private Tile CreateTile(ITileViewModel Element)
         {
-            var imageSource = new BitmapImage();
-            imageSource.BeginInit();
-            imageSource.StreamSource = ViewModel.ThumbnailStream;
-            imageSource.EndInit();
-
-            //var image = new Image
-            //{
-            //    Source = imageSource,
-            //    Width = TileSize.Width,
-            //    Height = TileSize.Height
-            //};
-
-            var image = new Grid
+            var viewModel = _tileViewModelFactory.CreateInstance(Element);
+            var placeholder = new ContentControl
             {
-                //Background = Brushes.Brown,
+                Content = viewModel,
+                ContentTemplate = TileTemplate,
                 Width = TileSize.Width,
                 Height = TileSize.Height
             };
-            image.Children.Add(new Image
-            {
-                Source = imageSource,
-                Width = TileSize.Width,
-                Height = TileSize.Height
-            });
-            image.Children.Add(new TextBlock
-            {
-                Text = ViewModel.Index.ToString(),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = Brushes.White,
-                FontSize = 16
-            });
 
-            Children.Add(image);
-            var tile = new Tile(ViewModel.Index, image);
+            Children.Add(placeholder);
+            var tile = new Tile(viewModel.Index, placeholder);
             RefreshTilePosition(tile);
             return tile;
         }
@@ -388,7 +374,7 @@ namespace Parrot.Controls.TileView
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (obj.GetType() != GetType()) return false;
             return Equals((GridPosition)obj);
         }
 
