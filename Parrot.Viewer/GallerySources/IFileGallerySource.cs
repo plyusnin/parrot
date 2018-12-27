@@ -1,4 +1,5 @@
 ﻿using ReactiveUI;
+using ReactiveUI.Legacy;
 
 namespace Parrot.Viewer.GallerySources
 {

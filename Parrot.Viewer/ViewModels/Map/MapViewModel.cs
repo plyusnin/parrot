@@ -8,6 +8,7 @@ using MapVisualization.TileLoaders;
 using MapVisualization.TileLoaders.TilePathProvider;
 using Parrot.Viewer.GallerySources;
 using ReactiveUI;
+using ReactiveUI.Legacy;
 
 namespace Parrot.Viewer.ViewModels.Map
 {

@@ -5,6 +5,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Parrot.Viewer.GallerySources.Database;
 using ReactiveUI;
+using ReactiveUI.Legacy;
 
 namespace Parrot.Viewer.GallerySources
 {
