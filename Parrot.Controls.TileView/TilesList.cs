@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,8 +11,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using ReactiveUI;
-using ReactiveUI.Legacy;
+using DynamicData;
+using DynamicData.Binding;
 
 namespace Parrot.Controls.TileView
 {
@@ -46,7 +48,9 @@ namespace Parrot.Controls.TileView
 
         private readonly Subject<double> _targetOffset = new Subject<double>();
 
-        private readonly ReactiveList<ITileViewModel> _tileViewModels;
+        private readonly TileViewModelFactory _tileViewModelFactory = new TileViewModelFactory();
+
+        private readonly SourceCache<ITileElement, int> _tileViewModels;
 
         private int _columns;
 
@@ -54,8 +58,7 @@ namespace Parrot.Controls.TileView
 
         private Bounds _loadedBounds;
         private int _rows;
-
-        private readonly TileViewModelFactory _tileViewModelFactory = new TileViewModelFactory();
+        private readonly ReadOnlyObservableCollection<Tile> _tiles;
 
         private int _topmostRow;
 
@@ -64,8 +67,19 @@ namespace Parrot.Controls.TileView
         public TilesList()
         {
             Background = Brushes.Transparent;
-            _tileViewModels = new ReactiveList<ITileViewModel>();
-            Tiles = _tileViewModels.CreateDerivedCollection(CreateTile, RemoveTilesPack, scheduler: DispatcherScheduler.Current);
+            _tileViewModels = new SourceCache<ITileElement, int>(x => x.Index);
+
+
+
+            _tileViewModels.Connect()
+                           .ObserveOn(TaskPoolScheduler.Default)
+                           .Transform(i => _tileViewModelFactory.CreateInstance(i))
+                           .ObserveOnDispatcher()
+                           .Transform(CreateTile)
+                           .OnItemRemoved(RemoveTile)
+                           .Bind(out _tiles)
+                           .Subscribe();
+
             //ClipToBounds = true;
 
             //_targetOffset.Throttle(TimeSpan.FromMilliseconds(30))
@@ -111,7 +125,7 @@ namespace Parrot.Controls.TileView
             set => SetValue(TilesSourceProperty, value);
         }
 
-        private IReactiveDerivedList<Tile> Tiles { get; }
+        private ReadOnlyObservableCollection<Tile> Tiles => _tiles;
 
         private static void VisibleHeightChangedCallback(DependencyObject O, DependencyPropertyChangedEventArgs PropertyChangedEventArgs)
         {
@@ -167,17 +181,17 @@ namespace Parrot.Controls.TileView
             var newBounds = new Bounds { Min = _topmostRow * _columns, Max = (_topmostRow + _rows) * _columns };
             if (!_loadedBounds.Equals(newBounds))
             {
-                var maxExistingIndex = _tileViewModels.Select(t => t.Index)
+                var maxExistingIndex = _tileViewModels.Items.Select(t => t.Index)
                                                       .DefaultIfEmpty(-1)
                                                       .Max();
-                var minExistingIndex = _tileViewModels.Select(t => t.Index)
+                var minExistingIndex = _tileViewModels.Items.Select(t => t.Index)
                                                       .DefaultIfEmpty(-1)
                                                       .Min();
 
                 var tilesSource = TilesSource;
                 Task.Run(() =>
                          {
-                             var newTiles = new List<ITileViewModel>();
+                             var newTiles = new List<ITileElement>();
                              if (newBounds.Max > maxExistingIndex)
                              {
                                  var from = Math.Max(newBounds.Min, maxExistingIndex + 1);
@@ -190,21 +204,21 @@ namespace Parrot.Controls.TileView
                              }
 
                              if (!cancel.IsCancellationRequested)
-                                 Dispatcher.BeginInvoke((Action<List<ITileViewModel>, Bounds, CancellationToken>)SubmitNew,
+                                 Dispatcher.BeginInvoke((Action<List<ITileElement>, Bounds, CancellationToken>)SubmitNew,
                                                         newTiles, newBounds, cancel);
                          }, cancel);
             }
         }
 
-        private void SubmitNew(List<ITileViewModel> Items, Bounds Bounds, CancellationToken cancel)
+        private void SubmitNew(List<ITileElement> Items, Bounds Bounds, CancellationToken cancel)
         {
             if (!cancel.IsCancellationRequested)
             {
-                var tilessss = Items;
-
-                _tileViewModels.RemoveAll(_tileViewModels.Where(t => t.Index < Bounds.Min || t.Index >= Bounds.Max).ToList());
-                _tileViewModels.AddRange(tilessss);
-
+                _tileViewModels.Edit(list =>
+                                     {
+                                         list.Remove(list.Items.Where(t => t.Index < Bounds.Min || t.Index >= Bounds.Max).ToList());
+                                         list.AddOrUpdate(Items);
+                                     });
                 _loadedBounds = Bounds;
             }
         }
@@ -216,31 +230,34 @@ namespace Parrot.Controls.TileView
 
         private void OnTilesSourceChanged()
         {
-            _tileViewModels.Clear();
-            _tileViewModels.AddRange(TilesSource.GetTiles(0, _rows * _columns));
+            _tileViewModels.Edit(
+                list =>
+                {
+                    list.Clear();
+                    list.AddOrUpdate(TilesSource.GetTiles(0, _rows * _columns));
+                });
 
             Rearrange();
             UpdateGridContent();
         }
 
-        private void RemoveTilesPack(Tile Tile)
+        private void RemoveTile(Tile Tile)
         {
             Children.Remove(Tile.Image);
         }
 
-        private Tile CreateTile(ITileViewModel Element)
+        private Tile CreateTile(TileViewModel ViewModel)
         {
-            var viewModel = _tileViewModelFactory.CreateInstance(Element);
             var placeholder = new ContentControl
             {
-                Content = viewModel,
+                Content = ViewModel,
                 ContentTemplate = TileTemplate,
                 Width = TileSize.Width,
                 Height = TileSize.Height
             };
 
             Children.Add(placeholder);
-            var tile = new Tile(viewModel.Index, placeholder);
+            var tile = new Tile(ViewModel.Index, placeholder);
             RefreshTilePosition(tile);
             return tile;
         }
@@ -333,7 +350,7 @@ namespace Parrot.Controls.TileView
     public interface ITilesSource
     {
         int Count { get; }
-        IList<ITileViewModel> GetTiles(int StartIndex, int Count);
+        IList<ITileElement> GetTiles(int StartIndex, int Count);
     }
 
     internal class Tile

@@ -54,10 +54,10 @@ namespace Parrot.Viewer.ViewModels.Tiles
             _gallery = Gallery;
         }
 
-        public IList<ITileViewModel> GetTiles(int StartIndex, int Count)
+        public IList<ITileElement> GetTiles(int StartIndex, int Count)
         {
             return _gallery.All(StartIndex, Count)
-                           .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, tile, _gallery))
+                           .Select((tile, i) => (ITileElement)new ViewModelAdapter(StartIndex + i, tile, _gallery))
                            .ToList();
             //return Enumerable.Range(StartIndex, Count)
             //               .Select((tile, i) => (ITileViewModel)new ViewModelAdapter(StartIndex + i, new PhotoEntity("sasdf", null), null))
@@ -66,7 +66,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
 
         public int Count => _gallery.Count;
 
-        public class ViewModelAdapter : ITileViewModel
+        public class ViewModelAdapter : ITileElement
         {
             private readonly IGallery _gallery;
             private readonly BitmapImage _imageSource;
@@ -88,7 +88,7 @@ namespace Parrot.Viewer.ViewModels.Tiles
             public int Index { get; }
             public string Name { get; }
 
-            Stream ITileViewModel.OpenThumbnail()
+            Stream ITileElement.OpenThumbnail()
             {
                 return _gallery.OpenThumbnail(_photo);
             }
