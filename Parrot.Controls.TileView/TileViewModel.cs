@@ -26,8 +26,8 @@ namespace Parrot.Controls.TileView
             using (var stream = Element.OpenThumbnail())
             {
                 imageSource.BeginInit();
-                //imageSource.CacheOption = BitmapCacheOption.OnLoad;
                 imageSource.StreamSource = stream;
+                imageSource.DownloadCompleted += (s, e) => imageSource.Freeze();
                 imageSource.EndInit();
             }
             return new TileViewModel(Element.Index, Path.GetFileNameWithoutExtension(Element.Name), imageSource);
