@@ -13,13 +13,10 @@
                 <DataTemplate DataType="{x:Type local:TileViewModel}">
                     <Border>
                         <Grid>
-                            <Image Source="{Binding Thumbnail}" />
+                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                        Text="{Binding Name}"
                                        Foreground="White" FontSize="12" />
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Text="{Binding Index}"
-                                       Foreground="White" FontSize="16" Opacity="0.8" />
                         </Grid>
                     </Border>
                 </DataTemplate>
