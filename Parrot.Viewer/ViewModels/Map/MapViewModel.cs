@@ -28,6 +28,7 @@ namespace Parrot.Viewer.ViewModels.Map
             _gallery = Gallery;
             _geoIndexer = GeoIndexer;
             TileLoader = new WebTileLoader(OsmTilePathProviders.Voyager);
+            MapCenter = new EarthPoint(45.457, 12.3049);
 
             _visibleStacks = new ReactiveList<GeoStack>();
             MapElements = _visibleStacks.CreateDerivedCollection(CreateMapElement);
