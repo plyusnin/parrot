@@ -7,7 +7,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Geographics;
 using MapVisualization.Elements;
-using Parrot.Viewer.GallerySources;
 
 namespace Parrot.Viewer.ViewModels.Map
 {
@@ -15,15 +14,15 @@ namespace Parrot.Viewer.ViewModels.Map
     {
         private static readonly Typeface _typeface = new Typeface("Tahoma");
         private readonly int _photosCount;
-        private readonly Stream _thumbnailStream;
         private readonly double _previewSize = 50;
         private readonly Lazy<ImageSource> _thumbnail;
+        private readonly Stream _thumbnailStream;
 
         public PhotoMapElement(EarthPoint Position, int PhotosCount, Stream ThumbnailStream) : base(Position)
         {
             _photosCount = PhotosCount;
             _thumbnailStream = ThumbnailStream;
-            _thumbnail   = new Lazy<ImageSource>(LoadThumbnail);
+            _thumbnail = new Lazy<ImageSource>(LoadThumbnail);
         }
 
         protected override int ZIndex => 10;
@@ -33,7 +32,7 @@ namespace Parrot.Viewer.ViewModels.Map
             var thumbnail = new BitmapImage();
             thumbnail.BeginInit();
             thumbnail.StreamSource = _thumbnailStream;
-            thumbnail.CacheOption  = BitmapCacheOption.OnDemand;
+            thumbnail.CacheOption = BitmapCacheOption.OnDemand;
             thumbnail.EndInit();
             return thumbnail;
         }
@@ -43,10 +42,28 @@ namespace Parrot.Viewer.ViewModels.Map
             var radius = _previewSize / 2;
 
             if (IsMouseOver) radius *= 2;
-            if (Zoom < 14) radius   *= 0.7;
+            if (Zoom < 14) radius *= 0.7;
 
+            //var photoCitclePen = new Pen(new SolidColorBrush(Color.FromArgb(255, 102, 102, 102)), 1.5);
+            var photoCitclePen = new Pen(new SolidColorBrush(Colors.White), 2);
+            for (var i = Math.Min(_photosCount, 5); i > 1; i--)
+            {
+                dc.DrawEllipse(new SolidColorBrush(Colors.Black) { Opacity = 0.3}, 
+                               null,
+                               new Point(0, (i - 1) * 3),
+                               radius + 1.8, radius + 1.8);
+                dc.DrawEllipse(Brushes.WhiteSmoke,
+                               photoCitclePen,
+                               new Point(0, (i - 1) * 3),
+                               radius, radius);
+            }
+
+            dc.DrawEllipse(new SolidColorBrush(Colors.Black) { Opacity = 0.3 },
+                           null,
+                           new Point(),
+                           radius + 1.8, radius + 1.8);
             dc.DrawEllipse(new ImageBrush(_thumbnail.Value) { Stretch = Stretch.UniformToFill },
-                           new Pen(new SolidColorBrush(Color.FromArgb(255, 102, 102, 102)), 1.5),
+                           photoCitclePen,
                            new Point(),
                            radius, radius);
 

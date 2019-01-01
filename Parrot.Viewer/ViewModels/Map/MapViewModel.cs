@@ -18,6 +18,8 @@ namespace Parrot.Viewer.ViewModels.Map
         private readonly IGeoIndexer _geoIndexer;
         private readonly ReactiveList<GeoStack> _visibleStacks;
 
+        private EarthPoint _mapCenter;
+
         private EarthArea _visibleArea;
         private int _zoomLevel = 14;
 
@@ -25,7 +27,7 @@ namespace Parrot.Viewer.ViewModels.Map
         {
             _gallery = Gallery;
             _geoIndexer = GeoIndexer;
-            TileLoader = new WebTileLoader(OsmTilePathProviders.Retina);
+            TileLoader = new WebTileLoader(OsmTilePathProviders.Voyager);
 
             _visibleStacks = new ReactiveList<GeoStack>();
             MapElements = _visibleStacks.CreateDerivedCollection(CreateMapElement);
@@ -33,13 +35,13 @@ namespace Parrot.Viewer.ViewModels.Map
                               x => x.VisibleArea,
                               (zoom, area) => new { zoom = zoom + 1, area })
                 .Select(x => new
-                {
-                    x.zoom,
-                    x1 = _geoIndexer.GetX(x.area.MostWesternLongitude, x.zoom),
-                    x2 = _geoIndexer.GetX(x.area.MostEasternLongitude, x.zoom),
-                    y1 = _geoIndexer.GetY(x.area.MostNorthenLatitude, x.zoom),
-                    y2 = _geoIndexer.GetY(x.area.MostSouthernLatitude, x.zoom)
-                })
+                             {
+                                 x.zoom,
+                                 x1 = _geoIndexer.GetX(x.area.MostWesternLongitude, x.zoom),
+                                 x2 = _geoIndexer.GetX(x.area.MostEasternLongitude, x.zoom),
+                                 y1 = _geoIndexer.GetY(x.area.MostNorthenLatitude, x.zoom),
+                                 y2 = _geoIndexer.GetY(x.area.MostSouthernLatitude, x.zoom)
+                             })
                 .DistinctUntilChanged()
                 .Select(r => _gallery.GetPhotosOnMap(r.zoom, r.x1, r.x2, r.y1, r.y2))
                 .Subscribe(SynchronizeMapElements);
@@ -48,6 +50,12 @@ namespace Parrot.Viewer.ViewModels.Map
         public ITileLoader TileLoader { get; }
 
         public IReactiveDerivedList<MapElement> MapElements { get; }
+
+        public EarthPoint MapCenter
+        {
+            get => _mapCenter;
+            set => this.RaiseAndSetIfChanged(ref _mapCenter, value);
+        }
 
         public int ZoomLevel
         {
