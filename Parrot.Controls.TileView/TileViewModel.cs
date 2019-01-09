@@ -20,16 +20,19 @@ namespace Parrot.Controls.TileView
 
     public class TileViewModelFactory
     {
-        public TileViewModel CreateInstance(ITileViewModel Element)
+        public TileViewModel CreateInstance(ITileElement Element)
         {
             var imageSource = new BitmapImage();
+            var ms = new MemoryStream();
             using (var stream = Element.OpenThumbnail())
             {
-                imageSource.BeginInit();
-                //imageSource.CacheOption = BitmapCacheOption.OnLoad;
-                imageSource.StreamSource = stream;
-                imageSource.EndInit();
+                stream.CopyTo(ms);
             }
+            ms.Seek(0, SeekOrigin.Begin);
+            imageSource.BeginInit();
+            imageSource.StreamSource = ms;
+            imageSource.EndInit();
+            imageSource.Freeze();
             return new TileViewModel(Element.Index, Path.GetFileNameWithoutExtension(Element.Name), imageSource);
         }
     }

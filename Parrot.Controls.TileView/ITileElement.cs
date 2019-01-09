@@ -2,7 +2,7 @@
 
 namespace Parrot.Controls.TileView
 {
-    public interface ITileViewModel
+    public interface ITileElement
     {
         int Index { get; }
         string Name { get; }
